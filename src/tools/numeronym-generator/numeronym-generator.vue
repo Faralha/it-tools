@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { generateNumeronym } from './numeronym-generator.service';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const word = ref('');
 
@@ -12,6 +13,6 @@ const numeronym = computed(() => generateNumeronym(word.value));
 
     <icon-mdi-arrow-down text-30px />
 
-    <input-copyable :value="numeronym" size="large" readonly placeholder="Your numeronym will be here, e.g. 'i18n'" test-id="numeronym" />
+    <CodeSnippet :value="numeronym" test-id="numeronym" />
   </div>
 </template>

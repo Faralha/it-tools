@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type FormatOptionsWithLanguage, format as formatSQL } from 'sql-formatter';
-import TextareaCopyable from '@/components/TextareaCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 import { useStyleStore } from '@/stores/style.store';
 
 const inputElement = ref<HTMLElement>();
@@ -76,7 +76,7 @@ const prettySQL = computed(() => formatSQL(rawSQL.value, config));
     />
   </n-form-item>
   <n-form-item label="Prettify version of your query">
-    <TextareaCopyable :value="prettySQL" language="sql" :follow-height-of="inputElement" />
+    <CodeSnippet :value="prettySQL" language="sql" :follow-height-of="inputElement" />
   </n-form-item>
 </template>
 

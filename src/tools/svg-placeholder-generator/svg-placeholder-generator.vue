@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TextareaCopyable from '@/components/TextareaCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 import { useCopy } from '@/composable/copy';
 import { useDownloadFileFromBase64 } from '@/composable/downloadBase64';
 import { textToBase64 } from '@/utils/base64';
@@ -71,10 +71,10 @@ const { download } = useDownloadFileFromBase64({ source: base64 });
     </n-form>
 
     <n-form-item label="SVG HTML element">
-      <TextareaCopyable :value="svgString" copy-placement="none" />
+      <CodeSnippet :value="svgString" copy-placement="none" />
     </n-form-item>
     <n-form-item label="SVG in Base64">
-      <TextareaCopyable :value="base64" copy-placement="none" />
+      <CodeSnippet :value="base64" copy-placement="none" />
     </n-form-item>
 
     <div flex justify-center gap-3>

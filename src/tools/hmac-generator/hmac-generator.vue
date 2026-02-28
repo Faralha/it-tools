@@ -13,7 +13,7 @@ import {
 } from 'crypto-js';
 
 import { convertHexToBin } from '../hash-text/hash-text.service';
-import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const algos = {
   MD5: HmacMD5,
@@ -42,7 +42,6 @@ const encoding = ref<Encoding>('Hex');
 const hmac = computed(() =>
   formatWithEncoding(algos[hashFunction.value](plainText.value, secret.value), encoding.value),
 );
-const { copy } = useCopy({ source: hmac });
 </script>
 
 <template>
@@ -81,11 +80,6 @@ const { copy } = useCopy({ source: hmac });
         ]"
       />
     </div>
-    <input-copyable v-model:value="hmac" type="textarea" placeholder="The result of the HMAC..." label="HMAC of your text" />
-    <div flex justify-center>
-      <c-button @click="copy()">
-        Copy HMAC
-      </c-button>
-    </div>
+    <CodeSnippet :value="hmac" label="HMAC of your text" />
   </div>
 </template>

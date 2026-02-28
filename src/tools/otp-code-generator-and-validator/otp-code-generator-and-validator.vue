@@ -5,7 +5,7 @@ import { useQRCode } from '../qr-code-generator/useQRCode';
 import { base32toHex, buildKeyUri, generateSecret, generateTOTP, getCounterFromTime } from './otp.service';
 import TokenDisplay from './token-display.vue';
 import { useStyleStore } from '@/stores/style.store';
-import InputCopyable from '@/components/InputCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 import { computedRefreshable } from '@/composable/computedRefreshable';
 
 const now = useTimestamp();
@@ -85,41 +85,27 @@ const secretValidationRules = [
     </div>
   </div>
   <div style="max-width: 350px">
-    <InputCopyable
+    <CodeSnippet
       label="Secret in hexadecimal"
       :value="base32toHex(secret)"
-      readonly
-      placeholder="Secret in hex will be displayed here"
       mb-5
     />
 
-    <InputCopyable
+    <CodeSnippet
       label="Epoch"
       :value="Math.floor(now / 1000).toString()"
-      readonly
       mb-5
-      placeholder="Epoch in sec will be displayed here"
     />
 
     <p>Iteration</p>
 
-    <InputCopyable
+    <CodeSnippet
       :value="String(getCounterFromTime({ now, timeStep: 30 }))"
-      readonly
       label="Count:"
-      label-position="left"
-      label-width="90px"
-      label-align="right"
-      placeholder="Iteration count will be displayed here"
     />
 
-    <InputCopyable
+    <CodeSnippet
       :value="getCounterFromTime({ now, timeStep: 30 }).toString(16).padStart(16, '0')"
-      readonly
-      placeholder="Iteration count in hex will be displayed here"
-      label-position="left"
-      label-width="90px"
-      label-align="right"
       label="Padded hex:"
     />
   </div>

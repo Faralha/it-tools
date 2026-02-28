@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { AES, RC4, Rabbit, TripleDES, enc } from 'crypto-js';
 import { computedCatch } from '@/composable/computed/catchedComputed';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const algos = { AES, TripleDES, Rabbit, RC4 };
 
@@ -38,13 +39,7 @@ const [decryptOutput, decryptError] = computedCatch(() => algos[decryptAlgo.valu
         />
       </div>
     </div>
-    <c-input-text
-      label="Your text encrypted:"
-      :value="cypherOutput"
-      rows="3"
-      placeholder="Your string hash"
-      multiline monospace readonly autosize mt-5
-    />
+    <CodeSnippet :value="cypherOutput" label="Your text encrypted:" mt-5 />
   </c-card>
   <c-card title="Decrypt">
     <div flex gap-3>
@@ -68,13 +63,6 @@ const [decryptOutput, decryptError] = computedCatch(() => algos[decryptAlgo.valu
     <c-alert v-if="decryptError" type="error" mt-12 title="Error while decrypting">
       {{ decryptError }}
     </c-alert>
-    <c-input-text
-      v-else
-      label="Your decrypted text:"
-      :value="decryptOutput"
-      placeholder="Your string hash"
-      rows="3"
-      multiline monospace readonly autosize mt-5
-    />
+    <CodeSnippet v-else :value="decryptOutput" label="Your decrypted text:" mt-5 />
   </c-card>
 </template>

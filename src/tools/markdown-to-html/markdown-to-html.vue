@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import markdownit from 'markdown-it';
-import TextareaCopyable from '@/components/TextareaCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const inputMarkdown = ref('');
 const outputHtml = computed(() => {
@@ -32,7 +32,7 @@ function printHtml() {
     <n-divider />
 
     <n-form-item label="Output HTML:">
-      <TextareaCopyable :value="outputHtml" :word-wrap="true" language="html" />
+      <CodeSnippet :value="outputHtml" :word-wrap="true" language="html" />
     </n-form-item>
 
     <div flex justify-center>

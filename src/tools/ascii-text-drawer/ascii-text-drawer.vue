@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import figlet from 'figlet';
-import TextareaCopyable from '@/components/TextareaCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const input = ref('Ascii ART');
 const font = useStorage('ascii-text-drawer:font', 'Standard');
@@ -83,7 +83,7 @@ const fonts = ['1Row', '3-D', '3D Diagonal', '3D-ASCII', '3x5', '4Max', '5 Line 
     </c-alert>
 
     <n-form-item v-if="!processing && !errored" label="Ascii Art text:">
-      <TextareaCopyable
+      <CodeSnippet
         :value="output"
         mb-1 mt-1
         copy-placement="outside"

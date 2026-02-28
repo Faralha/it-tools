@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 import { base64ToText, isValidBase64, textToBase64 } from '@/utils/base64';
 import { withDefaultOnError } from '@/utils/defaults';
 
@@ -8,13 +8,11 @@ const decodeUrlSafe = useStorage('base64-string-converter--decode-url-safe', fal
 
 const textInput = ref('');
 const base64Output = computed(() => textToBase64(textInput.value, { makeUrlSafe: encodeUrlSafe.value }));
-const { copy: copyTextBase64 } = useCopy({ source: base64Output, text: 'Base64 string copied to the clipboard' });
 
 const base64Input = ref('');
 const textOutput = computed(() =>
   withDefaultOnError(() => base64ToText(base64Input.value.trim(), { makeUrlSafe: decodeUrlSafe.value }), ''),
 );
-const { copy: copyText } = useCopy({ source: textOutput, text: 'String copied to the clipboard' });
 const b64ValidationRules = [
   {
     message: 'Invalid base64 string',
@@ -39,21 +37,11 @@ const b64ValidationWatch = [decodeUrlSafe];
       mb-5
     />
 
-    <c-input-text
-      label="Base64 of string"
+    <CodeSnippet
       :value="base64Output"
-      multiline
-      readonly
-      placeholder="The base64 encoding of your string will be here"
-      rows="5"
-      mb-5
+      label="Base64 of string"
+      copy-message="Base64 string copied to the clipboard"
     />
-
-    <div flex justify-center>
-      <c-button @click="copyTextBase64()">
-        Copy base64
-      </c-button>
-    </div>
   </c-card>
 
   <c-card title="Base64 to string">
@@ -71,20 +59,10 @@ const b64ValidationWatch = [decodeUrlSafe];
       mb-5
     />
 
-    <c-input-text
-      v-model:value="textOutput"
+    <CodeSnippet
+      :value="textOutput"
       label="Decoded string"
-      placeholder="The decoded string will be here"
-      multiline
-      rows="5"
-      readonly
-      mb-5
+      copy-message="String copied to the clipboard"
     />
-
-    <div flex justify-center>
-      <c-button @click="copyText()">
-        Copy decoded string
-      </c-button>
-    </div>
   </c-card>
 </template>

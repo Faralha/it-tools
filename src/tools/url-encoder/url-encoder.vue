@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useCopy } from '@/composable/copy';
 import { useValidation } from '@/composable/validation';
 import { isNotThrowing } from '@/utils/boolean';
 import { withDefaultOnError } from '@/utils/defaults';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const encodeInput = ref('Hello world :)');
 const encodeOutput = computed(() => withDefaultOnError(() => encodeURIComponent(encodeInput.value), ''));
@@ -17,8 +17,6 @@ const encodedValidation = useValidation({
   ],
 });
 
-const { copy: copyEncoded } = useCopy({ source: encodeOutput, text: 'Encoded string copied to the clipboard' });
-
 const decodeInput = ref('Hello%20world%20%3A)');
 const decodeOutput = computed(() => withDefaultOnError(() => decodeURIComponent(decodeInput.value), ''));
 
@@ -31,8 +29,6 @@ const decodeValidation = useValidation({
     },
   ],
 });
-
-const { copy: copyDecoded } = useCopy({ source: decodeOutput, text: 'Decoded string copied to the clipboard' });
 </script>
 
 <template>
@@ -48,22 +44,7 @@ const { copy: copyDecoded } = useCopy({ source: decodeOutput, text: 'Decoded str
       mb-3
     />
 
-    <c-input-text
-      label="Your string encoded :"
-      :value="encodeOutput"
-      multiline
-      autosize
-      readonly
-      placeholder="Your string encoded"
-      rows="2"
-      mb-3
-    />
-
-    <div flex justify-center>
-      <c-button @click="copyEncoded()">
-        Copy
-      </c-button>
-    </div>
+    <CodeSnippet :value="encodeOutput" label="Your string encoded :" copy-message="Encoded string copied to the clipboard" />
   </c-card>
   <c-card title="Decode">
     <c-input-text
@@ -77,21 +58,6 @@ const { copy: copyDecoded } = useCopy({ source: decodeOutput, text: 'Decoded str
       mb-3
     />
 
-    <c-input-text
-      label="Your string decoded :"
-      :value="decodeOutput"
-      multiline
-      autosize
-      readonly
-      placeholder="Your string decoded"
-      rows="2"
-      mb-3
-    />
-
-    <div flex justify-center>
-      <c-button @click="copyDecoded()">
-        Copy
-      </c-button>
-    </div>
+    <CodeSnippet :value="decodeOutput" label="Your string decoded :" copy-message="Decoded string copied to the clipboard" />
   </c-card>
 </template>

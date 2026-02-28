@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { normalizeEmail } from 'email-normalizer';
 import { withDefaultOnError } from '@/utils/defaults';
-import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const emails = ref('');
 const normalizedEmails = computed(() => {
@@ -16,8 +16,6 @@ const normalizedEmails = computed(() => {
     })
     .join('\n');
 });
-
-const { copy } = useCopy({ source: normalizedEmails, text: 'Normalized emails copied to the clipboard', createToast: true });
 </script>
 
 <template>
@@ -41,25 +39,9 @@ const { copy } = useCopy({ source: normalizedEmails, text: 'Normalized emails co
     <div class="mb-2 mt-4">
       Normalized emails:
     </div>
-    <c-input-text
+    <CodeSnippet
       :value="normalizedEmails"
-      placeholder="Normalized emails will appear here..."
-      rows="3"
-      autocomplete="off"
-      autocorrect="off"
-      autocapitalize="off"
-      spellcheck="false"
-      multiline
-      readonly
-      monospace
+      copy-message="Normalized emails copied to the clipboard"
     />
-    <div class="mt-4 flex justify-center gap-2">
-      <c-button @click="emails = ''">
-        Clear emails
-      </c-button>
-      <c-button :disabled="!normalizedEmails" @click="copy()">
-        Copy normalized emails
-      </c-button>
-    </div>
   </div>
 </template>

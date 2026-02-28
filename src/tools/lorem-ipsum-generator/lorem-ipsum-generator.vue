@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { generateLoremIpsum } from './lorem-ipsum-generator.service';
-import { useCopy } from '@/composable/copy';
 import { randIntFromInterval } from '@/utils/random';
 import { computedRefreshable } from '@/composable/computedRefreshable';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const paragraphs = ref(1);
 const sentences = ref([3, 8]);
@@ -19,8 +19,6 @@ const [loremIpsumText, refreshLoremIpsum] = computedRefreshable(() =>
     startWithLoremIpsum: startWithLoremIpsum.value,
   }),
 );
-
-const { copy } = useCopy({ source: loremIpsumText, text: 'Lorem ipsum copied to the clipboard' });
 </script>
 
 <template>
@@ -41,13 +39,10 @@ const { copy } = useCopy({ source: loremIpsumText, text: 'Lorem ipsum copied to 
       <n-switch v-model:value="asHTML" />
     </n-form-item>
 
-    <c-input-text :value="loremIpsumText" multiline placeholder="Your lorem ipsum..." readonly mt-5 rows="5" />
+    <CodeSnippet :value="loremIpsumText" copy-message="Lorem ipsum copied to the clipboard" mt-5 />
 
     <div mt-5 flex justify-center gap-3>
-      <c-button autofocus @click="copy()">
-        Copy
-      </c-button>
-      <c-button @click="refreshLoremIpsum">
+      <c-button autofocus @click="refreshLoremIpsum">
         Refresh
       </c-button>
     </div>

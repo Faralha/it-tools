@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { v1 as generateUuidV1, v3 as generateUuidV3, v4 as generateUuidV4, v5 as generateUuidV5, NIL as nilUuid } from 'uuid';
-import { useCopy } from '@/composable/copy';
 import { computedRefreshable } from '@/composable/computedRefreshable';
 import { withDefaultOnError } from '@/utils/defaults';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const versions = ['NIL', 'v1', 'v3', 'v4', 'v5'] as const;
 
@@ -41,8 +41,6 @@ const [uuids, refreshUUIDs] = computedRefreshable(() => withDefaultOnError(() =>
     const generator = generators[version.value] ?? generators.NIL;
     return generator(index);
   }).join('\n'), ''));
-
-const { copy } = useCopy({ source: uuids, text: 'UUIDs copied to the clipboard' });
 </script>
 
 <template>
@@ -91,25 +89,10 @@ const { copy } = useCopy({ source: uuids, text: 'UUIDs copied to the clipboard' 
       />
     </div>
 
-    <c-input-text
-      style="text-align: center; font-family: monospace"
-      :value="uuids"
-      multiline
-      placeholder="Your uuids"
-      autosize
-      rows="1"
-      readonly
-      raw-text
-      monospace
-      my-3
-      class="uuid-display"
-    />
+    <CodeSnippet :value="uuids" copy-message="UUIDs copied to the clipboard" my-3 />
 
     <div flex justify-center gap-3>
-      <c-button autofocus @click="copy()">
-        Copy
-      </c-button>
-      <c-button @click="refreshUUIDs">
+      <c-button autofocus @click="refreshUUIDs">
         Refresh
       </c-button>
     </div>

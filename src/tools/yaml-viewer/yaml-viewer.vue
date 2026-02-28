@@ -4,7 +4,7 @@ import { useStorage } from '@vueuse/core';
 import { formatYaml } from './yaml-models';
 import { withDefaultOnError } from '@/utils/defaults';
 import { useValidation } from '@/composable/validation';
-import TextareaCopyable from '@/components/TextareaCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const inputElement = ref<HTMLElement>();
 
@@ -56,7 +56,7 @@ const rawYamlValidation = useValidation({
     />
   </n-form-item>
   <n-form-item label="Prettified version of your YAML">
-    <TextareaCopyable :value="cleanYaml" language="yaml" :follow-height-of="inputElement" />
+    <CodeSnippet :value="cleanYaml" language="yaml" :follow-height-of="inputElement" />
   </n-form-item>
 </template>
 

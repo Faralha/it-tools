@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { compareSync, hashSync } from 'bcryptjs';
 import { useThemeVars } from 'naive-ui';
-import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const themeVars = useThemeVars();
 
 const input = ref('');
 const saltCount = ref(10);
 const hashed = computed(() => hashSync(input.value, saltCount.value));
-const { copy } = useCopy({ source: hashed, text: 'Hashed string copied to the clipboard' });
 
 const compareString = ref('');
 const compareHash = ref('');
@@ -31,13 +30,7 @@ const compareMatch = computed(() => compareSync(compareString.value, compareHash
       <n-input-number v-model:value="saltCount" placeholder="Salt rounds..." :max="100" :min="0" w-full />
     </n-form-item>
 
-    <c-input-text :value="hashed" readonly text-center />
-
-    <div mt-5 flex justify-center>
-      <c-button @click="copy()">
-        Copy hash
-      </c-button>
-    </div>
+    <CodeSnippet :value="hashed" copy-message="Hashed string copied to the clipboard" />
   </c-card>
 
   <c-card title="Compare string with hash">

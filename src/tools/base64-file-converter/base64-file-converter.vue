@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useBase64 } from '@vueuse/core';
 import type { Ref } from 'vue';
-import { useCopy } from '@/composable/copy';
 import { getExtensionFromMimeType, getMimeTypeFromBase64, previewImageFromBase64, useDownloadFileFromBase64Refs } from '@/composable/downloadBase64';
 import { useValidation } from '@/composable/validation';
 import { isValidBase64 } from '@/utils/base64';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const fileName = ref('file');
 const fileExtension = ref('');
@@ -69,7 +69,6 @@ function downloadFile() {
 
 const fileInput = ref() as Ref<File>;
 const { base64: fileBase64 } = useBase64(fileInput);
-const { copy: copyFileBase64 } = useCopy({ source: fileBase64, text: 'Base64 string copied to the clipboard' });
 
 async function onUpload(file: File) {
   if (file) {
@@ -123,13 +122,7 @@ async function onUpload(file: File) {
 
   <c-card title="File to base64">
     <c-file-upload title="Drag and drop a file here, or click to select a file" @file-upload="onUpload" />
-    <c-input-text :value="fileBase64" multiline readonly placeholder="File in base64 will be here" rows="5" my-2 />
-
-    <div flex justify-center>
-      <c-button @click="copyFileBase64()">
-        Copy
-      </c-button>
-    </div>
+    <CodeSnippet :value="fileBase64" copy-message="Base64 string copied to the clipboard" mt-2 />
   </c-card>
 </template>
 

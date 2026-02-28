@@ -49,9 +49,6 @@ const output = computed(() => transformer.value(input.value));
   />
 
   <div overflow-auto>
-    <div mb-5px>
-      {{ outputLabel }}
-    </div>
-    <textarea-copyable :value="output" :language="outputLanguage" :follow-height-of="inputElement?.inputWrapperRef" />
+    <code-snippet :value="output" :label="outputLabel" :language="outputLanguage" :follow-height-of="inputElement?.inputWrapperRef" />
   </div>
 </template>

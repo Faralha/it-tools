@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { decodeSafeLinksURL } from './safelink-decoder.service';
-import TextareaCopyable from '@/components/TextareaCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const inputSafeLinkUrl = ref('');
 const outputDecodedUrl = computed(() => {
@@ -26,7 +26,7 @@ const outputDecodedUrl = computed(() => {
     <n-divider />
 
     <n-form-item label="Output decoded URL:">
-      <TextareaCopyable :value="outputDecodedUrl" :word-wrap="true" />
+      <CodeSnippet :value="outputDecodedUrl" :word-wrap="true" />
     </n-form-item>
   </div>
 </template>

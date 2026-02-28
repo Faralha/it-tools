@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { useThemeVars } from 'naive-ui';
 
-import InputCopyable from '../../components/InputCopyable.vue';
-import { computeChmodOctalRepresentation, computeChmodSymbolicRepresentation } from './chmod-calculator.service';
-
 import type { Group, Scope } from './chmod-calculator.types';
+import { computeChmodOctalRepresentation, computeChmodSymbolicRepresentation } from './chmod-calculator.service';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const themeVars = useThemeVars();
 
@@ -62,7 +61,7 @@ const symbolic = computed(() => computeChmodSymbolicRepresentation({ permissions
       {{ symbolic }}
     </div>
 
-    <InputCopyable :value="`chmod ${octal} path`" readonly />
+    <CodeSnippet :value="`chmod ${octal} path`" />
   </div>
 </template>
 

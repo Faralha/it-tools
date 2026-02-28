@@ -4,7 +4,7 @@ import { useStorage } from '@vueuse/core';
 import { formatJson } from './json.models';
 import { withDefaultOnError } from '@/utils/defaults';
 import { useValidation } from '@/composable/validation';
-import TextareaCopyable from '@/components/TextareaCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const inputElement = ref<HTMLElement>();
 
@@ -55,7 +55,7 @@ const rawJsonValidation = useValidation({
     />
   </n-form-item>
   <n-form-item label="Prettified version of your JSON">
-    <TextareaCopyable :value="cleanJson" language="json" :follow-height-of="inputElement" />
+    <CodeSnippet :value="cleanJson" language="json" :follow-height-of="inputElement" />
   </n-form-item>
 </template>
 

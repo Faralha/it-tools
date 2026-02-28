@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { createToken } from './token-generator.service';
-import { useCopy } from '@/composable/copy';
 import { useQueryParam } from '@/composable/queryParams';
 import { computedRefreshable } from '@/composable/computedRefreshable';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const length = useQueryParam({ name: 'length', defaultValue: 64 });
 const withUppercase = useQueryParam({ name: 'uppercase', defaultValue: true });
@@ -20,8 +20,6 @@ const [token, refreshToken] = computedRefreshable(() =>
     withSymbols: withSymbols.value,
   }),
 );
-
-const { copy } = useCopy({ source: token, text: t('tools.token-generator.copied') });
 </script>
 
 <template>
@@ -55,20 +53,9 @@ const { copy } = useCopy({ source: token, text: t('tools.token-generator.copied'
         <n-slider v-model:value="length" :step="1" :min="1" :max="512" />
       </n-form-item>
 
-      <c-input-text
-        v-model:value="token"
-        multiline
-        :placeholder="t('tools.token-generator.tokenPlaceholder')"
-        readonly
-        rows="3"
-        autosize
-        class="token-display"
-      />
+      <CodeSnippet :value="token" copy-message="Token copied to the clipboard" mt-2 />
 
       <div mt-5 flex justify-center gap-3>
-        <c-button @click="copy()">
-          {{ t('tools.token-generator.button.copy') }}
-        </c-button>
         <c-button @click="refreshToken">
           {{ t('tools.token-generator.button.refresh') }}
         </c-button>

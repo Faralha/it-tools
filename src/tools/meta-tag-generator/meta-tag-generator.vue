@@ -3,7 +3,7 @@ import { generateMeta } from '@it-tools/oggen';
 import _ from 'lodash';
 import { image, ogSchemas, twitter, website } from './og-schemas';
 import type { OGSchemaType, OGSchemaTypeElementSelect } from './OGSchemaType.type';
-import TextareaCopyable from '@/components/TextareaCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 // Since type guards do not work in template
 
@@ -84,7 +84,7 @@ const metaTags = computed(() => {
   </div>
   <div>
     <n-form-item label="Your meta tags">
-      <TextareaCopyable :value="metaTags" language="html" />
+      <CodeSnippet :value="metaTags" language="html" />
     </n-form-item>
   </div>
 </template>
