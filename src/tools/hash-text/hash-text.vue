@@ -32,20 +32,33 @@ function formatWithEncoding(words: lib.WordArray, encoding: Encoding) {
 }
 
 const hashText = (algo: AlgoNames, value: string) => formatWithEncoding(algos[algo](value), encoding.value);
+
+const snippetCode = `import { SHA256, MD5, SHA1, SHA512, enc } from 'crypto-js';
+
+const input = "{{input}}";
+
+const hash = SHA256(input).toString(enc.Hex);
+console.log(hash);
+// => "{{output}}"`;
+
+const snippetVars = computed(() => ({
+  input: clearText.value,
+  output: hashText('SHA256', clearText.value),
+}));
 </script>
 
 <template>
   <div>
     <c-card>
-      <c-input-text v-model:value="clearText" multiline raw-text placeholder="Your string to hash..." rows="3" autosize autofocus label="Your text to hash:" />
+      <c-input-text
+        v-model:value="clearText" multiline raw-text placeholder="Your string to hash..." rows="3" autosize
+        autofocus label="Your text to hash:"
+      />
 
       <n-divider />
 
       <c-select
-        v-model:value="encoding"
-        mb-4
-        label="Digest encoding"
-        :options="[
+        v-model:value="encoding" mb-4 label="Digest encoding" :options="[
           {
             label: 'Binary (base 2)',
             value: 'Bin',
@@ -75,4 +88,8 @@ const hashText = (algo: AlgoNames, value: string) => formatWithEncoding(algos[al
       </div>
     </c-card>
   </div>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

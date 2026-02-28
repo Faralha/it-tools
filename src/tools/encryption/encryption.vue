@@ -17,45 +17,79 @@ const [decryptOutput, decryptError] = computedCatch(() => algos[decryptAlgo.valu
   defaultValue: '',
   defaultErrorMessage: 'Unable to decrypt your text',
 });
+
+const encryptSnippetCode = `import { AES, TripleDES, Rabbit, RC4 } from 'crypto-js';
+
+const input = "{{input}}";
+const secret = "{{secret}}";
+const algo = "{{algo}}";
+
+const algos = { AES, TripleDES, Rabbit, RC4 };
+const encrypted = algos[algo].encrypt(input, secret).toString();
+
+console.log(encrypted);
+// => "{{output}}"`;
+
+const encryptSnippetVars = computed(() => ({
+  input: cypherInput.value,
+  secret: cypherSecret.value,
+  algo: cypherAlgo.value,
+  output: cypherOutput.value,
+}));
+
+const decryptSnippetCode = `import { AES, TripleDES, Rabbit, RC4, enc } from 'crypto-js';
+
+const encrypted = "{{input}}";
+const secret = "{{secret}}";
+const algo = "{{algo}}";
+
+const algos = { AES, TripleDES, Rabbit, RC4 };
+const decrypted = algos[algo].decrypt(encrypted, secret).toString(enc.Utf8);
+
+console.log(decrypted);
+// => "{{output}}"`;
+
+const decryptSnippetVars = computed(() => ({
+  input: decryptInput.value,
+  secret: decryptSecret.value,
+  algo: decryptAlgo.value,
+  output: decryptOutput.value,
+}));
 </script>
 
 <template>
   <c-card title="Encrypt">
     <div flex gap-3>
       <c-input-text
-        v-model:value="cypherInput"
-        label="Your text:"
-        placeholder="The string to cypher"
-        rows="4"
-        multiline raw-text monospace autosize flex-1
+        v-model:value="cypherInput" label="Your text:" placeholder="The string to cypher" rows="4" multiline
+        raw-text monospace autosize flex-1
       />
       <div flex flex-1 flex-col gap-2>
         <c-input-text v-model:value="cypherSecret" label="Your secret key:" clearable raw-text />
 
         <c-select
-          v-model:value="cypherAlgo"
-          label="Encryption algorithm:"
+          v-model:value="cypherAlgo" label="Encryption algorithm:"
           :options="Object.keys(algos).map((label) => ({ label, value: label }))"
         />
       </div>
     </div>
     <CodeSnippet :value="cypherOutput" label="Your text encrypted:" mt-5 />
   </c-card>
+
+  <c-card title="Code snippet — Encrypt">
+    <CodeSnippet :code="encryptSnippetCode" :variables="encryptSnippetVars" language="javascript" />
+  </c-card>
   <c-card title="Decrypt">
     <div flex gap-3>
       <c-input-text
-        v-model:value="decryptInput"
-        label="Your encrypted text:"
-        placeholder="The string to cypher"
-        rows="4"
-        multiline raw-text monospace autosize flex-1
+        v-model:value="decryptInput" label="Your encrypted text:" placeholder="The string to cypher"
+        rows="4" multiline raw-text monospace autosize flex-1
       />
       <div flex flex-1 flex-col gap-2>
         <c-input-text v-model:value="decryptSecret" label="Your secret key:" clearable raw-text />
 
         <c-select
-          v-model:value="decryptAlgo"
-          label="Encryption algorithm:"
+          v-model:value="decryptAlgo" label="Encryption algorithm:"
           :options="Object.keys(algos).map((label) => ({ label, value: label }))"
         />
       </div>
@@ -64,5 +98,9 @@ const [decryptOutput, decryptError] = computedCatch(() => algos[decryptAlgo.valu
       {{ decryptError }}
     </c-alert>
     <CodeSnippet v-else :value="decryptOutput" label="Your decrypted text:" mt-5 />
+  </c-card>
+
+  <c-card title="Code snippet — Decrypt">
+    <CodeSnippet :code="decryptSnippetCode" :variables="decryptSnippetVars" language="javascript" />
   </c-card>
 </template>

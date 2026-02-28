@@ -22,6 +22,25 @@ const [certs, refreshCerts] = computedRefreshableAsync(
   () => withDefaultOnErrorAsync(() => generateKeyPair({ bits: bits.value }), emptyCerts),
   emptyCerts,
 );
+
+const snippetCode = `import { generateKeyPair } from './rsa-key-pair-generator.service';
+
+// Generate an RSA key pair
+const { publicKeyPem, privateKeyPem } = await generateKeyPair({ bits: {{bits}} });
+
+console.log('Public Key:');
+console.log(publicKeyPem);
+// => {{publicKeyPreview}}
+
+console.log('Private Key:');
+console.log(privateKeyPem);
+// => {{privateKeyPreview}}`;
+
+const snippetVars = computed(() => ({
+  bits: String(bits.value),
+  publicKeyPreview: certs.value.publicKeyPem.split('\n').slice(0, 2).join(' ').slice(0, 60),
+  privateKeyPreview: certs.value.privateKeyPem.split('\n').slice(0, 2).join(' ').slice(0, 60),
+}));
 </script>
 
 <template>
@@ -45,5 +64,11 @@ const [certs, refreshCerts] = computedRefreshableAsync(
   <div>
     <h3>Private key</h3>
     <CodeSnippet :value="certs.privateKeyPem" />
+  </div>
+
+  <div style="max-width: 700px; margin: 16px auto;">
+    <c-card title="Code snippet">
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

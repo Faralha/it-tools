@@ -15,6 +15,24 @@ const config = reactive<FormatOptionsWithLanguage>({
 
 const rawSQL = ref('select field1,field2,field3 from my_table where my_condition;');
 const prettySQL = computed(() => formatSQL(rawSQL.value, config));
+
+const snippetCode = `import { format as formatSQL } from 'sql-formatter';
+
+const rawSQL = \`{{input}}\`;
+
+const formatted = formatSQL(rawSQL, {
+  keywordCase: 'upper',
+  language: 'sql',
+  indentStyle: 'standard',
+});
+
+console.log(formatted);
+// {{output}}`;
+
+const snippetVars = computed(() => ({
+  input: rawSQL.value.replace(/`/g, '\\`').slice(0, 60),
+  output: prettySQL.value.replace(/\n/g, ' ').slice(0, 80),
+}));
 </script>
 
 <template>
@@ -78,6 +96,10 @@ const prettySQL = computed(() => formatSQL(rawSQL.value, config));
   <n-form-item label="Prettify version of your query">
     <CodeSnippet :value="prettySQL" language="sql" :follow-height-of="inputElement" />
   </n-form-item>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>
 
 <style lang="less" scoped>

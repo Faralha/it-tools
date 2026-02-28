@@ -2,6 +2,7 @@
 import { SHA1 } from 'crypto-js';
 import InputCopyable from '@/components/InputCopyable.vue';
 import { macAddressValidation } from '@/utils/macAddress';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const macAddress = ref('20:37:06:12:34:56');
 const calculatedSections = computed(() => {
@@ -13,22 +14,30 @@ const calculatedSections = computed(() => {
   const ula = `fd${hex40bit.substring(0, 2)}:${hex40bit.substring(2, 6)}:${hex40bit.substring(6)}`;
 
   return [
-    {
-      label: 'IPv6 ULA:',
-      value: `${ula}::/48`,
-    },
-    {
-      label: 'First routable block:',
-      value: `${ula}:0::/64`,
-    },
-    {
-      label: 'Last routable block:',
-      value: `${ula}:ffff::/64`,
-    },
+    { label: 'IPv6 ULA:', value: `${ula}::/48` },
+    { label: 'First routable block:', value: `${ula}:0::/64` },
+    { label: 'Last routable block:', value: `${ula}:ffff::/64` },
   ];
 });
 
 const addressValidation = macAddressValidation(macAddress);
+
+const snippetCode = `import { SHA1 } from 'crypto-js';
+
+// Generate an IPv6 Unique Local Address (ULA) from MAC address
+const macAddress = '{{mac}}';
+const timestamp = Date.now();
+
+const hex40bit = SHA1(timestamp + macAddress).toString().substring(30);
+const ula = 'fd' + hex40bit.substring(0, 2) + ':' + hex40bit.substring(2, 6) + ':' + hex40bit.substring(6);
+
+console.log('IPv6 ULA:', ula + '::/48');
+// => {{output}}`;
+
+const snippetVars = computed(() => ({
+  mac: macAddress.value,
+  output: calculatedSections.value[0]?.value ?? '',
+}));
 </script>
 
 <template>
@@ -61,5 +70,9 @@ const addressValidation = macAddressValidation(macAddress);
         mb-2
       />
     </div>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

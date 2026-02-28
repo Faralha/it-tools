@@ -20,6 +20,7 @@ import { useCopy } from '@/composable/copy';
 import { useValidation } from '@/composable/validation';
 import { isNotThrowing } from '@/utils/boolean';
 import { withDefaultOnError } from '@/utils/defaults';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const languages = {
   'English': englishWordList,
@@ -78,6 +79,26 @@ function refreshEntropy() {
 
 const { copy: copyEntropy } = useCopy({ source: entropy, text: 'Entropy copied to the clipboard' });
 const { copy: copyPassphrase } = useCopy({ source: passphrase, text: 'Passphrase copied to the clipboard' });
+
+const snippetCode = `import { entropyToMnemonic, mnemonicToEntropy, generateEntropy } from '@it-tools/bip39';
+import { englishWordList } from '@it-tools/bip39';
+
+// Generate random entropy and convert to mnemonic
+const entropy = '{{entropy}}';
+const wordlist = englishWordList;
+
+const mnemonic = entropyToMnemonic(entropy, wordlist);
+console.log('Mnemonic:', mnemonic);
+// => {{mnemonic}}
+
+// Convert mnemonic back to entropy
+const recoveredEntropy = mnemonicToEntropy(mnemonic, wordlist);
+console.log('Entropy:', recoveredEntropy);`;
+
+const snippetVars = computed(() => ({
+  entropy: entropy.value.slice(0, 32),
+  mnemonic: `${passphrase.value.split(' ').slice(0, 6).join(' ')}...`,
+}));
 </script>
 
 <template>
@@ -127,5 +148,9 @@ const { copy: copyPassphrase } = useCopy({ source: passphrase, text: 'Passphrase
         </c-button>
       </n-input-group>
     </n-form-item>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

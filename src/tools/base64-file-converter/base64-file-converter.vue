@@ -75,35 +75,47 @@ async function onUpload(file: File) {
     fileInput.value = file;
   }
 }
+
+const snippetCode = `// File to Base64 using FileReader API
+function fileToBase64(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Base64 back to a downloadable file blob
+function base64ToFile(base64, filename, mimeType) {
+  const byteString = atob(base64.split(',')[1] ?? base64);
+  const ab = new Uint8Array(byteString.length);
+  byteString.split('').forEach((c, i) => (ab[i] = c.charCodeAt(0)));
+  return new File([ab], filename, { type: mimeType });
+}
+
+// Current file: '{{filename}}'
+const result = await fileToBase64(file);
+// => '{{output}}'`;
+
+const snippetVars = computed(() => ({
+  filename: fileInput.value?.name ?? 'example.png',
+  output: fileBase64.value?.slice(0, 40) ?? 'data:image/png;base64,iVBOR...',
+}));
 </script>
 
 <template>
   <c-card title="Base64 to file">
     <n-grid cols="3" x-gap="12">
       <n-gi span="2">
-        <c-input-text
-          v-model:value="fileName"
-          label="File Name"
-          placeholder="Download filename"
-          mb-2
-        />
+        <c-input-text v-model:value="fileName" label="File Name" placeholder="Download filename" mb-2 />
       </n-gi>
       <n-gi>
-        <c-input-text
-          v-model:value="fileExtension"
-          label="Extension"
-          placeholder="Extension"
-          mb-2
-        />
+        <c-input-text v-model:value="fileExtension" label="Extension" placeholder="Extension" mb-2 />
       </n-gi>
     </n-grid>
     <c-input-text
-      v-model:value="base64Input"
-      multiline
-      placeholder="Put your base64 file string here..."
-      rows="5"
-      :validation="base64InputValidation"
-      mb-2
+      v-model:value="base64Input" multiline placeholder="Put your base64 file string here..." rows="5"
+      :validation="base64InputValidation" mb-2
     />
 
     <div flex justify-center py-2>
@@ -123,6 +135,10 @@ async function onUpload(file: File) {
   <c-card title="File to base64">
     <c-file-upload title="Drag and drop a file here, or click to select a file" @file-upload="onUpload" />
     <CodeSnippet :value="fileBase64" copy-message="Base64 string copied to the clipboard" mt-2 />
+  </c-card>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
   </c-card>
 </template>
 

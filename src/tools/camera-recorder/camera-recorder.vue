@@ -2,6 +2,7 @@
 import _ from 'lodash';
 
 import { useMediaRecorder } from './useMediaRecorder';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 interface Media { type: 'image' | 'video'; value: string; createdAt: Date }
 
@@ -101,6 +102,31 @@ function downloadMedia({ type, value, createdAt }: Media) {
   link.download = `${type}-${createdAt.getTime()}.${type === 'image' ? 'png' : 'webm'}`;
   link.click();
 }
+
+const snippetCode = `// Access camera and record video using MediaRecorder API
+const stream = await navigator.mediaDevices.getUserMedia({
+  video: { deviceId: '{{cameraId}}' },
+  audio: true,
+});
+
+const recorder = new MediaRecorder(stream);
+const chunks = [];
+
+recorder.ondataavailable = (e) => chunks.push(e.data);
+recorder.onstop = () => {
+  const blob = new Blob(chunks, { type: 'video/webm' });
+  const url = URL.createObjectURL(blob);
+  // => '{{blobUrl}}'
+};
+
+recorder.start();
+// ... later:
+recorder.stop();`;
+
+const snippetVars = computed(() => ({
+  cameraId: cameras.value[0]?.deviceId?.slice(0, 20) ?? 'default',
+  blobUrl: 'blob:https://example.com/...',
+}));
 </script>
 
 <template>
@@ -127,19 +153,12 @@ function downloadMedia({ type, value, createdAt }: Media) {
     <c-card v-else>
       <div flex flex-col gap-2>
         <c-select
-          v-model:value="currentCamera"
-          label-position="left"
-          label-width="60px"
-          label="Video:"
-          :options="cameras.map(({ deviceId, label }) => ({ value: deviceId, label }))"
-          placeholder="Select camera"
+          v-model:value="currentCamera" label-position="left" label-width="60px" label="Video:"
+          :options="cameras.map(({ deviceId, label }) => ({ value: deviceId, label }))" placeholder="Select camera"
         />
         <c-select
-          v-if="currentMicrophone && microphones.length > 0"
-          v-model:value="currentMicrophone"
-          label="Audio:"
-          label-position="left"
-          label-width="60px"
+          v-if="currentMicrophone && microphones.length > 0" v-model:value="currentMicrophone" label="Audio:"
+          label-position="left" label-width="60px"
           :options="microphones.map(({ deviceId, label }) => ({ value: deviceId, label }))"
           placeholder="Select microphone"
         />
@@ -214,4 +233,8 @@ function downloadMedia({ type, value, createdAt }: Media) {
       </c-card>
     </div>
   </div>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

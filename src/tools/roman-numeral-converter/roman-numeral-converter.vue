@@ -8,6 +8,7 @@ import {
 } from './roman-numeral-converter.service';
 import { useCopy } from '@/composable/copy';
 import { useValidation } from '@/composable/validation';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const inputNumeral = ref(42);
 const outputRoman = computed(() => arabicToRoman(inputNumeral.value));
@@ -37,6 +38,32 @@ const validationRoman = useValidation({
 
 const { copy: copyRoman } = useCopy({ source: outputRoman, text: 'Roman number copied to the clipboard' });
 const { copy: copyArabic } = useCopy({ source: () => String(outputNumeral), text: 'Arabic number copied to the clipboard' });
+
+const arabicToRomanSnippetCode = `import { arabicToRoman } from './roman-numeral-converter.service';
+
+const input = {{input}};
+const roman = arabicToRoman(input);
+
+console.log(roman);
+// => {{output}}`;
+
+const arabicToRomanSnippetVars = computed(() => ({
+  input: String(inputNumeral.value),
+  output: outputRoman.value,
+}));
+
+const romanToArabicSnippetCode = `import { romanToArabic } from './roman-numeral-converter.service';
+
+const input = '{{input}}';
+const arabic = romanToArabic(input);
+
+console.log(arabic);
+// => {{output}}`;
+
+const romanToArabicSnippetVars = computed(() => ({
+  input: inputRoman.value,
+  output: String(outputNumeral.value),
+}));
 </script>
 
 <template>
@@ -53,6 +80,9 @@ const { copy: copyArabic } = useCopy({ source: () => String(outputNumeral), text
           Copy
         </c-button>
       </div>
+      <c-card title="Code snippet" mt-3>
+        <CodeSnippet :code="arabicToRomanSnippetCode" :variables="arabicToRomanSnippetVars" language="javascript" />
+      </c-card>
     </c-card>
     <c-card title="Roman to arabic" mt-5>
       <div flex items-center justify-between>
@@ -65,6 +95,9 @@ const { copy: copyArabic } = useCopy({ source: () => String(outputNumeral), text
           Copy
         </c-button>
       </div>
+      <c-card title="Code snippet" mt-3>
+        <CodeSnippet :code="romanToArabicSnippetCode" :variables="romanToArabicSnippetVars" language="javascript" />
+      </c-card>
     </c-card>
   </div>
 </template>

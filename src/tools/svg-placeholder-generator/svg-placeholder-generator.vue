@@ -29,6 +29,36 @@ const base64 = computed(() => `data:image/svg+xml;base64,${textToBase64(svgStrin
 const { copy: copySVG } = useCopy({ source: svgString });
 const { copy: copyBase64 } = useCopy({ source: base64 });
 const { download } = useDownloadFileFromBase64({ source: base64 });
+
+const snippetCode = `// Generate an SVG placeholder image
+function generateSvgPlaceholder({ width, height, bgColor, fgColor, text, fontSize }) {
+  const label = text || width + 'x' + height;
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + width + ' ' + height + '" width="' + width + '" height="' + height + '">'
+    + '<rect width="' + width + '" height="' + height + '" fill="' + bgColor + '"></rect>'
+    + '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="' + fontSize + 'px" fill="' + fgColor + '">' + label + '</text>'
+    + '</svg>';
+}
+
+const svg = generateSvgPlaceholder({
+  width: {{width}},
+  height: {{height}},
+  bgColor: '{{bgColor}}',
+  fgColor: '{{fgColor}}',
+  text: '{{text}}',
+  fontSize: {{fontSize}},
+});
+
+const base64 = 'data:image/svg+xml;base64,' + btoa(svg);
+// Use as: <img src={base64} />`;
+
+const snippetVars = computed(() => ({
+  width: String(width.value),
+  height: String(height.value),
+  bgColor: bgColor.value,
+  fgColor: fgColor.value,
+  text: customText.value || `${width.value}x${height.value}`,
+  fontSize: String(fontSize.value),
+}));
 </script>
 
 <template>
@@ -56,13 +86,8 @@ const { download } = useDownloadFileFromBase64({ source: base64 });
         </n-form-item>
 
         <c-input-text
-          v-model:value="customText"
-          label="Custom text"
-          :placeholder="`Default is ${width}x${height}`"
-          label-position="left"
-          label-width="100px"
-          label-align="right"
-          flex-1
+          v-model:value="customText" label="Custom text" :placeholder="`Default is ${width}x${height}`"
+          label-position="left" label-width="100px" label-align="right" flex-1
         />
       </div>
       <n-form-item label="Use exact size" label-placement="left">
@@ -91,6 +116,10 @@ const { download } = useDownloadFileFromBase64({ source: base64 });
   </div>
 
   <img :src="base64" alt="Image">
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>
 
 <style lang="less" scoped>

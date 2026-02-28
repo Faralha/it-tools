@@ -49,6 +49,25 @@ const secretValidationRules = [
     validator: (value: string) => value !== '',
   },
 ];
+
+const snippetCode = `import { generateTOTP, getCounterFromTime } from './otp.service';
+
+// Generate a TOTP code using a shared secret
+const secret = '{{secret}}';
+const now = Date.now(); // current timestamp in ms
+
+const token = generateTOTP({ key: secret, now });
+console.log('TOTP token:', token); // => {{token}}
+
+// Check the current time step
+const counter = getCounterFromTime({ now, timeStep: 30 });
+console.log('Counter:', counter); // => {{counter}}`;
+
+const snippetVars = computed(() => ({
+  secret: secret.value,
+  token: tokens.value?.current ?? '',
+  counter: String(getCounterFromTime({ now: now.value, timeStep: 30 })),
+}));
 </script>
 
 <template>
@@ -108,6 +127,10 @@ const secretValidationRules = [
       :value="getCounterFromTime({ now, timeStep: 30 }).toString(16).padStart(16, '0')"
       label="Padded hex:"
     />
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>
 

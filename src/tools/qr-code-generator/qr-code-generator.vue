@@ -2,6 +2,7 @@
 import type { QRCodeErrorCorrectionLevel } from 'qrcode';
 import { useQRCode } from './useQRCode';
 import { useDownloadFileFromBase64 } from '@/composable/downloadBase64';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const foreground = ref('#000000ff');
 const background = ref('#ffffffff');
@@ -21,6 +22,29 @@ const { qrcode } = useQRCode({
 });
 
 const { download } = useDownloadFileFromBase64({ source: qrcode, filename: 'qr-code.png' });
+
+const snippetCode = `import QRCode from 'qrcode';
+
+// Generate QR code as a data URL
+const text = '{{text}}';
+const dataUrl = await QRCode.toDataURL(text, {
+  color: {
+    dark: '{{foreground}}',
+    light: '{{background}}',
+  },
+  errorCorrectionLevel: '{{errorLevel}}',
+  width: 400,
+});
+
+// Use in img tag: <img src={dataUrl} />
+console.log('QR code data URL generated');`;
+
+const snippetVars = computed(() => ({
+  text: text.value.slice(0, 50),
+  foreground: foreground.value,
+  background: background.value,
+  errorLevel: errorCorrectionLevel.value,
+}));
 </script>
 
 <template>
@@ -65,5 +89,9 @@ const { download } = useDownloadFileFromBase64({ source: qrcode, filename: 'qr-c
         </div>
       </n-gi>
     </n-grid>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </c-card>
 </template>

@@ -26,19 +26,26 @@ const errors = computed(() =>
 );
 const dockerComposeBase64 = computed(() => `data:application/yaml;base64,${textToBase64(dockerCompose.value)}`);
 const { download } = useDownloadFileFromBase64({ source: dockerComposeBase64, filename: 'docker-compose.yml' });
+
+const snippetCode = `import { composerize } from 'composerize-ts';
+
+const dockerRun = "{{input}}";
+
+const result = composerize(dockerRun);
+console.log(result.yaml);
+/* {{output}} */`;
+
+const snippetVars = computed(() => ({
+  input: dockerRun.value,
+  output: dockerCompose.value || '(docker-compose yaml output)',
+}));
 </script>
 
 <template>
   <div>
     <c-input-text
-      v-model:value="dockerRun"
-      label="Your docker run command:"
-      style="font-family: monospace"
-      multiline
-      raw-text
-      monospace
-      placeholder="Your docker run command to convert..."
-      rows="3"
+      v-model:value="dockerRun" label="Your docker run command:" style="font-family: monospace" multiline
+      raw-text monospace placeholder="Your docker run command to convert..." rows="3"
     />
 
     <n-divider />
@@ -64,8 +71,7 @@ const { download } = useDownloadFileFromBase64({ source: dockerComposeBase64, fi
     <div v-if="notImplemented.length > 0">
       <n-alert
         title="This options are not yet implemented and therefore haven't been translated to docker-compose"
-        type="warning"
-        mt-5
+        type="warning" mt-5
       >
         <ul>
           <li v-for="(message, index) of notImplemented" :key="index">
@@ -85,4 +91,8 @@ const { download } = useDownloadFileFromBase64({ source: dockerComposeBase64, fi
       </n-alert>
     </div>
   </div>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

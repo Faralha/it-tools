@@ -19,6 +19,24 @@ const [loremIpsumText, refreshLoremIpsum] = computedRefreshable(() =>
     startWithLoremIpsum: startWithLoremIpsum.value,
   }),
 );
+
+const snippetCode = `import { generateLoremIpsum } from './lorem-ipsum-generator.service';
+import { randIntFromInterval } from '@/utils/random';
+
+const lorem = generateLoremIpsum({
+  paragraphCount: 1,
+  asHTML: false,
+  sentencePerParagraph: randIntFromInterval(3, 8),
+  wordCount: randIntFromInterval(8, 15),
+  startWithLoremIpsum: true,
+});
+
+console.log(lorem);
+// {{output}}`;
+
+const snippetVars = computed(() => ({
+  output: loremIpsumText.value.slice(0, 80),
+}));
 </script>
 
 <template>
@@ -46,5 +64,9 @@ const [loremIpsumText, refreshLoremIpsum] = computedRefreshable(() =>
         Refresh
       </c-button>
     </div>
+  </c-card>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
   </c-card>
 </template>

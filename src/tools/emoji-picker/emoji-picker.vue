@@ -5,6 +5,7 @@ import _ from 'lodash';
 import type { EmojiInfo } from './emoji.types';
 import { useFuzzySearch } from '@/composable/fuzzySearch';
 import useDebouncedRef from '@/composable/debouncedref';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const escapeUnicode = ({ emoji }: { emoji: string }) => emoji.split('').map(unit => `\\u${unit.charCodeAt(0).toString(16).padStart(4, '0')}`).join('');
 const getEmojiCodePoints = ({ emoji }: { emoji: string }) => emoji.codePointAt(0) ? `0x${emoji.codePointAt(0)?.toString(16)}` : undefined;
@@ -36,16 +37,37 @@ const { searchResult } = useFuzzySearch({
     isCaseSensitive: false,
   },
 });
+
+const snippetCode = `import emojiUnicodeData from 'unicode-emoji-json';
+
+// Escape an emoji to its unicode representation
+const escapeUnicode = (emoji) =>
+  [...emoji].map(c => '\\\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
+
+// Get the code point of an emoji
+const getCodePoint = (emoji) =>
+  '0x' + emoji.codePointAt(0).toString(16);
+
+const emoji = '{{emoji}}';
+console.log(escapeUnicode(emoji)); // => '{{unicode}}'
+console.log(getCodePoint(emoji));  // => '{{codePoint}}'`;
+
+const selectedEmoji = computed(() => {
+  const first = searchResult.value[0] ?? emojis[0];
+  return first;
+});
+
+const snippetVars = computed(() => ({
+  emoji: selectedEmoji.value?.emoji ?? '😀',
+  unicode: selectedEmoji.value?.unicode ?? '\\u1f600',
+  codePoint: selectedEmoji.value?.codePoints ?? '0x1f600',
+}));
 </script>
 
 <template>
   <div mx-auto max-w-2400px important:flex-1>
     <div flex items-center gap-3>
-      <c-input-text
-        v-model:value="searchQuery"
-        placeholder="Search emojis (e.g. 'smile')..."
-        mx-auto max-w-600px
-      >
+      <c-input-text v-model:value="searchQuery" placeholder="Search emojis (e.g. 'smile')..." mx-auto max-w-600px>
         <template #prefix>
           <icon-mdi-search mr-6px color-black op-70 dark:color-white />
         </template>
@@ -53,12 +75,7 @@ const { searchResult } = useFuzzySearch({
     </div>
 
     <div v-if="searchQuery.trim().length > 0">
-      <div
-        v-if="searchResult.length === 0"
-        mt-4
-        text-20px
-        font-bold
-      >
+      <div v-if="searchResult.length === 0" mt-4 text-20px font-bold>
         No results
       </div>
 
@@ -71,11 +88,7 @@ const { searchResult } = useFuzzySearch({
       </div>
     </div>
 
-    <div
-      v-for="{ group, emojiInfos } in emojisGroups"
-      v-else
-      :key="group"
-    >
+    <div v-for="{ group, emojiInfos } in emojisGroups" v-else :key="group">
       <div mt-4 text-20px font-bold>
         {{ group }}
       </div>
@@ -83,4 +96,8 @@ const { searchResult } = useFuzzySearch({
       <emoji-grid :emoji-infos="emojiInfos" />
     </div>
   </div>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

@@ -22,6 +22,24 @@ const rawJsonValidation = useValidation({
     },
   ],
 });
+
+const snippetCode = `import JSON5 from 'json5';
+
+// Parse and prettify JSON (supports JSON5 format)
+const raw = \`{{input}}\`;
+
+const parsed = JSON5.parse(raw);
+const pretty = JSON.stringify(parsed, {{sortKeys}}, {{indent}});
+
+console.log(pretty);
+// => {{output}}`;
+
+const snippetVars = computed(() => ({
+  input: rawJson.value.replace(/\n/g, ' ').slice(0, 40),
+  sortKeys: sortKeys.value ? 'Object.keys(parsed).sort().reduce((a, k) => ({ ...a, [k]: parsed[k] }), {})' : 'null',
+  indent: String(indentSize.value),
+  output: cleanJson.value.replace(/\n/g, ' ').slice(0, 60),
+}));
 </script>
 
 <template>
@@ -37,31 +55,27 @@ const rawJsonValidation = useValidation({
   </div>
 
   <n-form-item
-    label="Your raw JSON"
-    :feedback="rawJsonValidation.message"
+    label="Your raw JSON" :feedback="rawJsonValidation.message"
     :validation-status="rawJsonValidation.status"
   >
     <c-input-text
-      ref="inputElement"
-      v-model:value="rawJson"
-      placeholder="Paste your raw JSON here..."
-      rows="20"
-      multiline
-      autocomplete="off"
-      autocorrect="off"
-      autocapitalize="off"
-      spellcheck="false"
-      monospace
+      ref="inputElement" v-model:value="rawJson" placeholder="Paste your raw JSON here..." rows="20"
+      multiline autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" monospace
     />
   </n-form-item>
   <n-form-item label="Prettified version of your JSON">
     <CodeSnippet :value="cleanJson" language="json" :follow-height-of="inputElement" />
   </n-form-item>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>
 
 <style lang="less" scoped>
 .result-card {
   position: relative;
+
   .copy-button {
     position: absolute;
     top: 10px;

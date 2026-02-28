@@ -3,6 +3,7 @@ import { decodeJwt } from './jwt-parser.service';
 import { useValidation } from '@/composable/validation';
 import { isNotThrowing } from '@/utils/boolean';
 import { withDefaultOnError } from '@/utils/defaults';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const rawJwt = ref(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
@@ -25,6 +26,32 @@ const validation = useValidation({
       message: 'Invalid JWT',
     },
   ],
+});
+
+const snippetCode = `// Decode a JWT token (without verification)
+function decodeJWT(token) {
+  const [header, payload] = token.split('.').slice(0, 2)
+    .map(part => JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))));
+  return { header, payload };
+}
+
+const jwt = '{{input}}';
+const { header, payload } = decodeJWT(jwt);
+
+console.log('header:', JSON.stringify(header));
+// => {{headerOutput}}
+console.log('payload:', JSON.stringify(payload));
+// => {{payloadOutput}}`;
+
+const snippetVars = computed(() => {
+  const decoded = decodedJWT.value;
+  const headerObj = Object.fromEntries((decoded.header || []).map((c: any) => [c.claim, c.value]));
+  const payloadObj = Object.fromEntries((decoded.payload || []).map((c: any) => [c.claim, c.value]));
+  return {
+    input: `${rawJwt.value.slice(0, 40)}...`,
+    headerOutput: JSON.stringify(headerObj).slice(0, 60),
+    payloadOutput: JSON.stringify(payloadObj).slice(0, 60),
+  };
 });
 </script>
 
@@ -57,6 +84,10 @@ const validation = useValidation({
         </template>
       </tbody>
     </n-table>
+  </c-card>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
   </c-card>
 </template>
 

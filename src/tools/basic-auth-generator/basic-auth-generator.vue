@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CodeSnippet from '@/components/CodeSnippet.vue';
 import { useCopy } from '@/composable/copy';
 import { textToBase64 } from '@/utils/base64';
 
@@ -7,18 +8,28 @@ const password = ref('');
 const header = computed(() => `Authorization: Basic ${textToBase64(`${username.value}:${password.value}`)}`);
 
 const { copy } = useCopy({ source: header, text: 'Header copied to the clipboard' });
+
+const snippetCode = `const username = "{{username}}";
+const password = "{{password}}";
+
+const credentials = btoa(\`${username}:${password}\`);
+const header = \`Authorization: Basic ${credentials}\`;
+
+console.log(header);
+// => "{{output}}"`;
+
+const snippetVars = computed(() => ({
+  username: username.value,
+  password: password.value,
+  output: header.value,
+}));
 </script>
 
 <template>
   <div>
     <c-input-text v-model:value="username" label="Username" placeholder="Your username..." clearable raw-text mb-5 />
     <c-input-text
-      v-model:value="password"
-      label="Password"
-      placeholder="Your password..."
-      clearable
-      raw-text
-      mb-2
+      v-model:value="password" label="Password" placeholder="Your password..." clearable raw-text mb-2
       type="password"
     />
 
@@ -35,6 +46,10 @@ const { copy } = useCopy({ source: header, text: 'Header copied to the clipboard
       </c-button>
     </div>
   </div>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>
 
 <style lang="less" scoped>

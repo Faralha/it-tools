@@ -2,6 +2,7 @@
 import { useRafFn } from '@vueuse/core';
 
 import { formatMs } from './chronometer.service';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const isRunning = ref(false);
 const counter = ref(0);
@@ -26,6 +27,31 @@ function pause() {
   pauseRaf();
   isRunning.value = false;
 }
+
+const snippetCode = `// High-precision chronometer using requestAnimationFrame
+let counter = 0;
+let previousTimestamp = 0;
+let rafId;
+
+function tick(timestamp) {
+  const delta = timestamp - previousTimestamp;
+  counter += delta;
+  previousTimestamp = timestamp;
+  rafId = requestAnimationFrame(tick);
+}
+
+// Start
+previousTimestamp = performance.now();
+rafId = requestAnimationFrame(tick);
+
+// Elapsed: {{elapsed}} ms
+
+// Stop
+cancelAnimationFrame(rafId);`;
+
+const snippetVars = computed(() => ({
+  elapsed: String(counter.value),
+}));
 </script>
 
 <template>
@@ -47,6 +73,10 @@ function pause() {
         Reset
       </c-button>
     </div>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>
 

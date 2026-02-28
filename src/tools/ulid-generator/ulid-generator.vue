@@ -3,6 +3,7 @@ import { ulid } from 'ulid';
 import _ from 'lodash';
 import { computedRefreshable } from '@/composable/computedRefreshable';
 import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const amount = useStorage('ulid-generator-amount', 1);
 const formats = [{ label: 'Raw', value: 'raw' }, { label: 'JSON', value: 'json' }] as const;
@@ -19,6 +20,18 @@ const [ulids, refreshUlids] = computedRefreshable(() => {
 });
 
 const { copy } = useCopy({ source: ulids, text: 'ULIDs copied to the clipboard' });
+
+const snippetCode = `import { ulid } from 'ulid';
+
+// Generate a random ULID
+const id = ulid();
+
+console.log(id);
+// => {{output}}`;
+
+const snippetVars = computed(() => ({
+  output: ulids.value.split('\n')[0] || '',
+}));
 </script>
 
 <template>
@@ -42,5 +55,9 @@ const { copy } = useCopy({ source: ulids, text: 'ULIDs copied to the clipboard' 
         Copy
       </c-button>
     </div>
+
+    <c-card title="Code snippet">
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

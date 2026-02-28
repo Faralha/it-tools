@@ -6,6 +6,7 @@ import { addMilliseconds, formatRelative } from 'date-fns';
 import { enGB } from 'date-fns/locale';
 
 import { formatMsDuration } from './eta-calculator.service';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const unitCount = ref(3 * 62);
 const unitPerTimeSpan = ref(3);
@@ -21,6 +22,28 @@ const durationMs = computed(() => {
 const endAt = computed(() =>
   formatRelative(addMilliseconds(startedAt.value, durationMs.value), Date.now(), { locale: enGB }),
 );
+
+const snippetCode = `import { addMilliseconds, formatRelative } from 'date-fns';
+
+// Calculate ETA for a task
+const totalUnits = {{unitCount}};
+const unitsPerMs = {{unitPerTimeSpan}} / ({{timeSpan}} * {{multiplier}});
+const durationMs = totalUnits / unitsPerMs;
+
+const startedAt = new Date({{startedAt}});
+const endAt = addMilliseconds(startedAt, durationMs);
+
+console.log('Duration:', durationMs, 'ms'); // => {{durationMs}} ms
+console.log('ETA:', endAt.toISOString());`;
+
+const snippetVars = computed(() => ({
+  unitCount: String(unitCount.value),
+  unitPerTimeSpan: String(unitPerTimeSpan.value),
+  timeSpan: String(timeSpan.value),
+  multiplier: String(timeSpanUnitMultiplier.value),
+  startedAt: String(startedAt.value),
+  durationMs: String(Math.round(durationMs.value)),
+}));
 </script>
 
 <template>
@@ -69,6 +92,10 @@ const endAt = computed(() =>
       <n-statistic label="It will end ">
         {{ endAt }}
       </n-statistic>
+    </c-card>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
     </c-card>
   </div>
 </template>

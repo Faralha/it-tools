@@ -2,6 +2,7 @@
 import cronstrue from 'cronstrue';
 import { isValidCron } from 'cron-validator';
 import { useStyleStore } from '@/stores/style.store';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 function isCronValid(v: string) {
   return isValidCron(v, { allowBlankDay: true, alias: true, seconds: true });
@@ -105,16 +106,29 @@ const cronValidationRules = [
     message: 'This cron is invalid',
   },
 ];
+
+const snippetCode = `import cronstrue from 'cronstrue';
+import { isValidCron } from 'cron-validator';
+
+const cron = "{{input}}";
+
+if (isValidCron(cron)) {
+  const description = cronstrue.toString(cron, { verbose: true });
+  console.log(description);
+  // => "{{output}}"
+}`;
+
+const snippetVars = computed(() => ({
+  input: cron.value,
+  output: cronString.value.trim(),
+}));
 </script>
 
 <template>
   <c-card>
     <div mx-auto max-w-sm>
       <c-input-text
-        v-model:value="cron"
-        size="large"
-        placeholder="* * * * *"
-        :validation-rules="cronValidationRules"
+        v-model:value="cron" size="large" placeholder="* * * * *" :validation-rules="cronValidationRules"
         mb-3
       />
     </div>
@@ -139,6 +153,11 @@ const cronValidationRules = [
       </n-form>
     </div>
   </c-card>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
+
   <c-card>
     <pre>
 ┌──────────── [optional] seconds (0 - 59)

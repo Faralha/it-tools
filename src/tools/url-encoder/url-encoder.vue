@@ -6,7 +6,6 @@ import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const encodeInput = ref('Hello world :)');
 const encodeOutput = computed(() => withDefaultOnError(() => encodeURIComponent(encodeInput.value), ''));
-
 const encodedValidation = useValidation({
   source: encodeInput,
   rules: [
@@ -19,7 +18,6 @@ const encodedValidation = useValidation({
 
 const decodeInput = ref('Hello%20world%20%3A)');
 const decodeOutput = computed(() => withDefaultOnError(() => decodeURIComponent(decodeInput.value), ''));
-
 const decodeValidation = useValidation({
   source: decodeInput,
   rules: [
@@ -29,6 +27,28 @@ const decodeValidation = useValidation({
     },
   ],
 });
+
+const encodeSnippetCode = `// Encode URI component
+const input = '{{input}}';
+const encoded = encodeURIComponent(input);
+console.log(encoded);
+// {{output}}`;
+
+const encodeSnippetVars = computed(() => ({
+  input: encodeInput.value,
+  output: encodeOutput.value,
+}));
+
+const decodeSnippetCode = `// Decode URI component
+const input = '{{input}}';
+const decoded = decodeURIComponent(input);
+console.log(decoded);
+// {{output}}`;
+
+const decodeSnippetVars = computed(() => ({
+  input: decodeInput.value,
+  output: decodeOutput.value,
+}));
 </script>
 
 <template>
@@ -45,6 +65,10 @@ const decodeValidation = useValidation({
     />
 
     <CodeSnippet :value="encodeOutput" label="Your string encoded :" copy-message="Encoded string copied to the clipboard" />
+
+    <c-card title="Code snippet" mt-3>
+      <CodeSnippet :code="encodeSnippetCode" :variables="encodeSnippetVars" language="javascript" />
+    </c-card>
   </c-card>
   <c-card title="Decode">
     <c-input-text
@@ -59,5 +83,9 @@ const decodeValidation = useValidation({
     />
 
     <CodeSnippet :value="decodeOutput" label="Your string decoded :" copy-message="Decoded string copied to the clipboard" />
+
+    <c-card title="Code snippet" mt-3>
+      <CodeSnippet :code="decodeSnippetCode" :variables="decodeSnippetVars" language="javascript" />
+    </c-card>
   </c-card>
 </template>

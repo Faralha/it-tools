@@ -2,6 +2,7 @@
 import InputCopyable from '../../components/InputCopyable.vue';
 import { isNotThrowing } from '@/utils/boolean';
 import { withDefaultOnError } from '@/utils/defaults';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const urlToParse = ref('https://me:pwd@it-tools.tech:3000/url-parser?key1=value&key2=value2#the-hash');
 
@@ -22,6 +23,22 @@ const properties: { title: string; key: keyof URL }[] = [
   { title: 'Path', key: 'pathname' },
   { title: 'Params', key: 'search' },
 ];
+
+const snippetCode = `// Parse a URL using the built-in URL API
+const url = new URL('{{input}}');
+
+console.log(url.protocol);  // {{protocol}}
+console.log(url.hostname);  // {{hostname}}
+console.log(url.pathname);  // {{pathname}}
+console.log(url.search);    // {{search}}`;
+
+const snippetVars = computed(() => ({
+  input: urlToParse.value.slice(0, 60),
+  protocol: urlParsed.value?.protocol ?? '',
+  hostname: urlParsed.value?.hostname ?? '',
+  pathname: urlParsed.value?.pathname ?? '',
+  search: urlParsed.value?.search ?? '',
+}));
 </script>
 
 <template>
@@ -62,6 +79,10 @@ const properties: { title: string; key: keyof URL }[] = [
       <InputCopyable :value="k" readonly />
       <InputCopyable :value="v" readonly />
     </div>
+  </c-card>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
   </c-card>
 </template>
 

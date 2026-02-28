@@ -6,6 +6,7 @@ import _ from 'lodash';
 import { arrayToMarkdownTable, computeAverage, computeVariance } from './benchmark-builder.models';
 import DynamicValues from './dynamic-values.vue';
 import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const suites = useStorage('benchmark-builder:suites', [
   { title: 'Suite 1', data: [5, 10] },
@@ -76,6 +77,28 @@ function copyAsBulletList() {
 
   copy(bulletList);
 }
+
+const snippetCode = `import { computeAverage, computeVariance } from './benchmark-builder.models';
+
+const suite = { title: '{{suiteTitle}}', data: [{{sampleData}}] };
+
+const mean     = computeAverage({ data: suite.data });
+// => {{mean}} {{unit}}
+
+const variance = computeVariance({ data: suite.data });
+// => {{variance}} {{unit}}²`;
+
+const snippetVars = computed(() => {
+  const first = suites.value[0] ?? { title: 'Suite 1', data: [] };
+  const firstResult = results.value[0];
+  return {
+    suiteTitle: first.title,
+    sampleData: first.data.slice(0, 5).join(', '),
+    mean: firstResult?.mean ?? '0',
+    variance: firstResult?.variance ?? '0',
+    unit: unit.value.trim() || 'ms',
+  };
+});
 </script>
 
 <template>
@@ -84,10 +107,7 @@ function copyAsBulletList() {
       <div v-for="(suite, index) of suites" :key="index">
         <c-card style="width: 294px">
           <c-input-text
-            v-model:value="suite.title"
-            label-position="left"
-            label="Suite name"
-            placeholder="Suite name..."
+            v-model:value="suite.title" label-position="left" label="Suite name" placeholder="Suite name..."
             clearable
           />
 
@@ -141,6 +161,10 @@ function copyAsBulletList() {
           Copy as bullet list
         </c-button>
       </div>
+
+      <c-card title="Code snippet" mt-5>
+        <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+      </c-card>
     </div>
   </div>
 </template>

@@ -2,10 +2,24 @@
 import { generatePort } from './random-port-generator.model';
 import { computedRefreshable } from '@/composable/computedRefreshable';
 import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const [port, refreshPort] = computedRefreshable(() => String(generatePort()));
 
 const { copy } = useCopy({ source: port, text: 'Port copied to the clipboard' });
+
+const snippetCode = `// Generate a random unregistered port (1024-65535)
+function generatePort(min = 1024, max = 65535) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const port = generatePort();
+console.log(port);
+// => {{output}}`;
+
+const snippetVars = computed(() => ({
+  output: port.value,
+}));
 </script>
 
 <template>
@@ -21,6 +35,10 @@ const { copy } = useCopy({ source: port, text: 'Port copied to the clipboard' })
         Refresh
       </c-button>
     </div>
+  </c-card>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
   </c-card>
 </template>
 

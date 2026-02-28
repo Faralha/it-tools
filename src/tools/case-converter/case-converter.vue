@@ -13,6 +13,7 @@ import {
   snakeCase,
 } from 'change-case';
 import InputCopyable from '../../components/InputCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const baseConfig = {
   stripRegexp: /[^A-Za-zÀ-ÖØ-öø-ÿ]+/gi,
@@ -87,27 +88,41 @@ const inputLabelAlignmentConfig = {
   labelWidth: '120px',
   labelAlign: 'right',
 };
+
+const snippetCode = `import { camelCase, snakeCase, pascalCase, kebabCase } from 'change-case';
+
+const input = "{{input}}";
+
+console.log(camelCase(input));   // => "{{camelCase}}"
+console.log(snakeCase(input));   // => "{{snakeCase}}"
+console.log(pascalCase(input));  // => "{{pascalCase}}"
+console.log(kebabCase(input));   // => "{{kebabCase}}"`;
+
+const snippetVars = computed(() => ({
+  input: input.value,
+  camelCase: camelCase(input.value, baseConfig),
+  snakeCase: snakeCase(input.value, baseConfig),
+  pascalCase: pascalCase(input.value, baseConfig),
+  kebabCase: paramCase(input.value, baseConfig),
+}));
 </script>
 
 <template>
   <c-card>
     <c-input-text
-      v-model:value="input"
-      label="Your string:"
-      placeholder="Your string..."
-      raw-text
+      v-model:value="input" label="Your string:" placeholder="Your string..." raw-text
       v-bind="inputLabelAlignmentConfig"
     />
 
     <div my-16px divider />
 
     <InputCopyable
-      v-for="format in formats"
-      :key="format.label"
-      :value="format.value"
-      :label="format.label"
-      v-bind="inputLabelAlignmentConfig"
-      mb-1
+      v-for="format in formats" :key="format.label" :value="format.value" :label="format.label"
+      v-bind="inputLabelAlignmentConfig" mb-1
     />
+  </c-card>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
   </c-card>
 </template>

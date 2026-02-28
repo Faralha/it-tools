@@ -2,6 +2,7 @@
 import InputCopyable from '../../components/InputCopyable.vue';
 import { convertBase } from './integer-base-converter.model';
 import { getErrorMessageIfThrows } from '@/utils/error';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const inputProps = {
   'labelPosition': 'left',
@@ -29,13 +30,38 @@ const error = computed(() =>
     convertBase({ value: input.value, fromBase: inputBase.value, toBase: outputBase.value }),
   ),
 );
+
+const binaryOutput = computed(() => errorlessConvert({ value: input.value, fromBase: inputBase.value, toBase: 2 }));
+const hexOutput = computed(() => errorlessConvert({ value: input.value, fromBase: inputBase.value, toBase: 16 }));
+
+const snippetCode = `import { convertBase } from './integer-base-converter.model';
+
+const value = '{{input}}';
+const fromBase = {{fromBase}};
+
+// Convert to binary (base 2)
+const binary = convertBase({ value, fromBase, toBase: 2 });
+console.log('Binary:', binary); // => {{binary}}
+
+// Convert to hexadecimal (base 16)
+const hex = convertBase({ value, fromBase, toBase: 16 });
+console.log('Hex:', hex); // => {{hex}}
+
+// Convert to any custom base
+const custom = convertBase({ value, fromBase, toBase: 64 });`;
+
+const snippetVars = computed(() => ({
+  input: input.value.slice(0, 20),
+  fromBase: String(inputBase.value),
+  binary: binaryOutput.value.slice(0, 20),
+  hex: hexOutput.value.slice(0, 20),
+}));
 </script>
 
 <template>
   <div>
     <c-card>
       <c-input-text v-model:value="input" label="Input number" placeholder="Put your number here (ex: 42)" label-position="left" label-width="110px" mb-2 label-align="right" />
-
       <n-form-item label="Input base" label-placement="left" label-width="110" :show-feedback="false">
         <n-input-number v-model:value="inputBase" max="64" min="2" placeholder="Put your input base here (ex: 10)" w-full />
       </n-form-item>
@@ -93,6 +119,10 @@ const error = computed(() =>
           :placeholder="`Base ${outputBase} will be here...`"
         />
       </div>
+    </c-card>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
     </c-card>
   </div>
 </template>

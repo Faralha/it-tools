@@ -13,7 +13,6 @@ const indentSize = useStorage('yaml-prettify:indent-size', 2);
 const sortKeys = useStorage('yaml-prettify:sort-keys', false);
 
 const cleanYaml = computed(() => withDefaultOnError(() => formatYaml({ rawYaml, indentSize, sortKeys }), ''));
-
 const rawYamlValidation = useValidation({
   source: rawYaml,
   rules: [
@@ -23,6 +22,20 @@ const rawYamlValidation = useValidation({
     },
   ],
 });
+
+const snippetCode = `import { parse, stringify } from 'yaml';
+
+const input = \`{{input}}\`;
+
+const prettified = stringify(parse(input), { indent: 2, sortMapEntries: false });
+
+console.log(prettified);
+// {{output}}`;
+
+const snippetVars = computed(() => ({
+  input: rawYaml.value.replace(/`/g, '\\`').slice(0, 60),
+  output: cleanYaml.value.replace(/\n/g, ' ').slice(0, 80),
+}));
 </script>
 
 <template>
@@ -58,6 +71,10 @@ const rawYamlValidation = useValidation({
   <n-form-item label="Prettified version of your YAML">
     <CodeSnippet :value="cleanYaml" language="yaml" :follow-height-of="inputElement" />
   </n-form-item>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>
 
 <style lang="less" scoped>

@@ -20,6 +20,25 @@ const [token, refreshToken] = computedRefreshable(() =>
     withSymbols: withSymbols.value,
   }),
 );
+
+const snippetCode = `// Generate a random token
+function createToken({ length, withUppercase, withLowercase, withNumbers, withSymbols }) {
+  const chars = [
+    withUppercase ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' : '',
+    withLowercase ? 'abcdefghijklmnopqrstuvwxyz' : '',
+    withNumbers ? '0123456789' : '',
+    withSymbols ? '!@#$%^&*()_+-=[]{}|;:,.<>?' : '',
+  ].join('');
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+// Generated token (length={{length}}):
+// {{output}}`;
+
+const snippetVars = computed(() => ({
+  length: String(length.value),
+  output: token.value.slice(0, 64),
+}));
 </script>
 
 <template>
@@ -60,6 +79,10 @@ const [token, refreshToken] = computedRefreshable(() =>
           {{ t('tools.token-generator.button.refresh') }}
         </c-button>
       </div>
+    </c-card>
+
+    <c-card title="Code snippet">
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
     </c-card>
   </div>
 </template>

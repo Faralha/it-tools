@@ -6,6 +6,7 @@ import { getIPClass } from './ipv4-subnet-calculator.models';
 import { withDefaultOnError } from '@/utils/defaults';
 import { isNotThrowing } from '@/utils/boolean';
 import SpanCopyable from '@/components/SpanCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const ip = useStorage('ipv4-subnet-calculator:ip', '192.168.0.1/24');
 
@@ -25,52 +26,17 @@ const sections: {
   getValue: (blocks: Netmask) => string | undefined
   undefinedFallback?: string
 }[] = [
-  {
-    label: 'Netmask',
-    getValue: block => block.toString(),
-  },
-  {
-    label: 'Network address',
-    getValue: ({ base }) => base,
-  },
-  {
-    label: 'Network mask',
-    getValue: ({ mask }) => mask,
-  },
-  {
-    label: 'Network mask in binary',
-    getValue: ({ bitmask }) => ('1'.repeat(bitmask) + '0'.repeat(32 - bitmask)).match(/.{8}/g)?.join('.') ?? '',
-  },
-  {
-    label: 'CIDR notation',
-    getValue: ({ bitmask }) => `/${bitmask}`,
-  },
-  {
-    label: 'Wildcard mask',
-    getValue: ({ hostmask }) => hostmask,
-  },
-  {
-    label: 'Network size',
-    getValue: ({ size }) => String(size),
-  },
-  {
-    label: 'First address',
-    getValue: ({ first }) => first,
-  },
-  {
-    label: 'Last address',
-    getValue: ({ last }) => last,
-  },
-  {
-    label: 'Broadcast address',
-    getValue: ({ broadcast }) => broadcast,
-    undefinedFallback: 'No broadcast address with this mask',
-  },
-  {
-    label: 'IP class',
-    getValue: ({ base: ip }) => getIPClass({ ip }),
-    undefinedFallback: 'Unknown class type',
-  },
+  { label: 'Netmask', getValue: block => block.toString() },
+  { label: 'Network address', getValue: ({ base }) => base },
+  { label: 'Network mask', getValue: ({ mask }) => mask },
+  { label: 'Network mask in binary', getValue: ({ bitmask }) => ('1'.repeat(bitmask) + '0'.repeat(32 - bitmask)).match(/.{8}/g)?.join('.') ?? '' },
+  { label: 'CIDR notation', getValue: ({ bitmask }) => `/${bitmask}` },
+  { label: 'Wildcard mask', getValue: ({ hostmask }) => hostmask },
+  { label: 'Network size', getValue: ({ size }) => String(size) },
+  { label: 'First address', getValue: ({ first }) => first },
+  { label: 'Last address', getValue: ({ last }) => last },
+  { label: 'Broadcast address', getValue: ({ broadcast }) => broadcast, undefinedFallback: 'No broadcast address with this mask' },
+  { label: 'IP class', getValue: ({ base: ip }) => getIPClass({ ip }), undefinedFallback: 'Unknown class type' },
 ];
 
 function switchToBlock({ count = 1 }: { count?: number }) {
@@ -80,6 +46,29 @@ function switchToBlock({ count = 1 }: { count?: number }) {
     ip.value = next.toString();
   }
 }
+
+const snippetCode = `import { Netmask } from 'netmask';
+
+// Parse a CIDR notation IPv4 address
+const cidr = '{{input}}';
+const block = new Netmask(cidr);
+
+console.log('Network address:', block.base);   // => {{base}}
+console.log('Netmask:', block.mask);            // => {{mask}}
+console.log('Broadcast:', block.broadcast);    // => {{broadcast}}
+console.log('First host:', block.first);       // => {{first}}
+console.log('Last host:', block.last);         // => {{last}}
+console.log('Network size:', block.size);      // => {{size}}`;
+
+const snippetVars = computed(() => ({
+  input: ip.value,
+  base: networkInfo.value?.base ?? '',
+  mask: networkInfo.value?.mask ?? '',
+  broadcast: networkInfo.value?.broadcast ?? '',
+  first: networkInfo.value?.first ?? '',
+  last: networkInfo.value?.last ?? '',
+  size: String(networkInfo.value?.size ?? ''),
+}));
 </script>
 
 <template>
@@ -120,5 +109,9 @@ function switchToBlock({ count = 1 }: { count?: number }) {
         </c-button>
       </div>
     </div>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

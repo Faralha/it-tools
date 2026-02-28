@@ -42,24 +42,39 @@ const encoding = ref<Encoding>('Hex');
 const hmac = computed(() =>
   formatWithEncoding(algos[hashFunction.value](plainText.value, secret.value), encoding.value),
 );
+
+const snippetCode = `import { HmacSHA256, HmacMD5, HmacSHA1, HmacSHA512, enc } from 'crypto-js';
+
+const text = "{{input}}";
+const secret = "{{secret}}";
+
+const hmac = HmacSHA256(text, secret).toString(enc.Hex);
+
+console.log(hmac);
+// => "{{output}}"`;
+
+const snippetVars = computed(() => ({
+  input: plainText.value,
+  secret: secret.value,
+  output: hmac.value,
+}));
 </script>
 
 <template>
   <div flex flex-col gap-4>
-    <c-input-text v-model:value="plainText" multiline raw-text placeholder="Plain text to compute the hash..." rows="3" autosize autofocus label="Plain text to compute the hash" />
+    <c-input-text
+      v-model:value="plainText" multiline raw-text placeholder="Plain text to compute the hash..." rows="3"
+      autosize autofocus label="Plain text to compute the hash"
+    />
     <c-input-text v-model:value="secret" raw-text placeholder="Enter the secret key..." label="Secret key" clearable />
 
     <div flex gap-2>
       <c-select
-        v-model:value="hashFunction" label="Hashing function"
-        flex-1
-        placeholder="Select an hashing function..."
+        v-model:value="hashFunction" label="Hashing function" flex-1 placeholder="Select an hashing function..."
         :options="Object.keys(algos).map((label) => ({ label, value: label }))"
       />
       <c-select
-        v-model:value="encoding" label="Output encoding"
-        flex-1
-        placeholder="Select the result encoding..."
+        v-model:value="encoding" label="Output encoding" flex-1 placeholder="Select the result encoding..."
         :options="[
           {
             label: 'Binary (base 2)',
@@ -82,4 +97,8 @@ const hmac = computed(() =>
     </div>
     <CodeSnippet :value="hmac" label="HMAC of your text" />
   </div>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

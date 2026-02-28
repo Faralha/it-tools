@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { getPasswordCrackTimeEstimation } from './password-strength-analyser.service';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const password = ref('');
 const crackTimeEstimation = computed(() => getPasswordCrackTimeEstimation({ password: password.value }));
@@ -22,6 +23,23 @@ const details = computed(() => [
     value: `${Math.round(crackTimeEstimation.value.score * 100)} / 100`,
   },
 ]);
+
+const snippetCode = `import { getPasswordCrackTimeEstimation } from './password-strength-analyser.service';
+
+const result = getPasswordCrackTimeEstimation({ password: '{{password}}' });
+
+// Entropy:  {{entropy}} bits
+// Charset:  {{charsetLength}}
+// Score:    {{score}} / 100
+// Crack in: {{crackDuration}}`;
+
+const snippetVars = computed(() => ({
+  password: password.value.slice(0, 30) || 'P@ssw0rd!',
+  entropy: String(Math.round(crackTimeEstimation.value.entropy * 100) / 100),
+  charsetLength: String(crackTimeEstimation.value.charsetLength),
+  score: String(Math.round(crackTimeEstimation.value.score * 100)),
+  crackDuration: crackTimeEstimation.value.crackDurationFormatted,
+}));
 </script>
 
 <template>
@@ -58,5 +76,9 @@ const details = computed(() => [
       <span font-bold>Note: </span>
       The computed strength is based on the time it would take to crack the password using a brute force approach, it does not take into account the possibility of a dictionary attack.
     </div>
+
+    <c-card title="Code snippet">
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

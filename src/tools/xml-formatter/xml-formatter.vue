@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { formatXml, isValidXML } from './xml-formatter.service';
 import type { UseValidationRule } from '@/composable/validation';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const defaultValue = '<hello><world>foo</world><world>bar</world></hello>';
 const indentSize = useStorage('xml-formatter:indent-size', 2);
 const collapseContent = useStorage('xml-formatter:collapse-content', true);
+const input = ref(defaultValue);
 
-function transformer(value: string) {
-  return formatXml(value, {
-    indentation: ' '.repeat(indentSize.value),
-    collapseContent: collapseContent.value,
-    lineSeparator: '\n',
-  });
-}
+const output = computed(() =>
+  input.value.trim() === ''
+    ? ''
+    : formatXml(input.value, {
+      indentation: ' '.repeat(indentSize.value),
+      collapseContent: collapseContent.value,
+      lineSeparator: '\n',
+    }),
+);
 
 const rules: UseValidationRule<string>[] = [
   {
@@ -20,6 +24,24 @@ const rules: UseValidationRule<string>[] = [
     message: 'Provided XML is not valid.',
   },
 ];
+
+const snippetCode = `import { XMLFormatter } from 'xml-formatter';
+
+const input = '{{input}}';
+
+const formatted = XMLFormatter(input, {
+  indentation: '  ',
+  collapseContent: true,
+  lineSeparator: '\\n',
+});
+
+console.log(formatted);
+// {{output}}`;
+
+const snippetVars = computed(() => ({
+  input: input.value.slice(0, 80),
+  output: output.value.replace(/\n/g, ' ').slice(0, 80),
+}));
 </script>
 
 <template>
@@ -34,13 +56,21 @@ const rules: UseValidationRule<string>[] = [
     </div>
   </div>
 
-  <format-transformer
-    input-label="Your XML"
-    input-placeholder="Paste your XML here..."
-    output-label="Formatted XML from your XML"
-    output-language="xml"
-    :input-validation-rules="rules"
-    :transformer="transformer"
-    :input-default="defaultValue"
+  <c-input-text
+    v-model:value="input"
+    label="Your XML"
+    placeholder="Paste your XML here..."
+    rows="10"
+    autosize
+    raw-text
+    multiline
+    :validation-rules="rules"
+    monospace
   />
+
+  <CodeSnippet :value="output" label="Formatted XML" language="xml" />
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

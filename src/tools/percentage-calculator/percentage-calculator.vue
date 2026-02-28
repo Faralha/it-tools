@@ -1,6 +1,8 @@
 <script setup lang="ts">
-const percentageX = ref();
-const percentageY = ref();
+import CodeSnippet from '@/components/CodeSnippet.vue';
+
+const percentageX = ref<number | undefined>();
+const percentageY = ref<number | undefined>();
 const percentageResult = computed(() => {
   if (percentageX.value === undefined || percentageY.value === undefined) {
     return '';
@@ -8,8 +10,8 @@ const percentageResult = computed(() => {
   return (percentageX.value / 100 * percentageY.value).toString();
 });
 
-const numberX = ref();
-const numberY = ref();
+const numberX = ref<number | undefined>();
+const numberY = ref<number | undefined>();
 const numberResult = computed(() => {
   if (numberX.value === undefined || numberY.value === undefined) {
     return '';
@@ -18,8 +20,8 @@ const numberResult = computed(() => {
   return (!Number.isFinite(result) || Number.isNaN(result)) ? '' : result.toString();
 });
 
-const numberFrom = ref();
-const numberTo = ref();
+const numberFrom = ref<number | undefined>();
+const numberTo = ref<number | undefined>();
 const percentageIncreaseDecrease = computed(() => {
   if (numberFrom.value === undefined || numberTo.value === undefined) {
     return '';
@@ -27,6 +29,34 @@ const percentageIncreaseDecrease = computed(() => {
   const result = (numberTo.value - numberFrom.value) / numberFrom.value * 100;
   return (!Number.isFinite(result) || Number.isNaN(result)) ? '' : result.toString();
 });
+
+const snippetCode = `// Percentage calculations in JavaScript
+
+// X% of Y
+function percentageOf(x, y) {
+  return x / 100 * y;
+}
+console.log('{{x}}% of {{y}} =', percentageOf({{x}}, {{y}})); // => {{result1}}
+
+// X is what percent of Y?
+function whatPercent(x, y) {
+  return 100 * x / y;
+}
+console.log('{{numX}} is what % of {{numY}}?', whatPercent({{numX}}, {{numY}})); // => {{result2}}
+
+// Percentage increase/decrease from X to Y
+function percentChange(from, to) {
+  return (to - from) / from * 100;
+}`;
+
+const snippetVars = computed(() => ({
+  x: String(percentageX.value ?? 25),
+  y: String(percentageY.value ?? 200),
+  result1: percentageResult.value || '50',
+  numX: String(numberX.value ?? 50),
+  numY: String(numberY.value ?? 200),
+  result2: numberResult.value || '25',
+}));
 </script>
 
 <template>
@@ -72,6 +102,10 @@ const percentageIncreaseDecrease = computed(() => {
           <n-input-number v-model:value="numberTo" data-test-id="numberTo" placeholder="To" />
           <input-copyable v-model:value="percentageIncreaseDecrease" data-test-id="percentageIncreaseDecrease" readonly placeholder="Result" style="max-width: 150px;" />
         </div>
+      </c-card>
+
+      <c-card title="Code snippet">
+        <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
       </c-card>
     </div>
   </div>

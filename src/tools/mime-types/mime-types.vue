@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { types as extensionToMimeType, extensions as mimeTypeToExtension } from 'mime-types';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const mimeInfos = Object.entries(mimeTypeToExtension).map(([mimeType, extensions]) => ({ mimeType, extensions }));
 
@@ -16,6 +17,23 @@ const extensionToMimeTypeOptions = Object.keys(extensionToMimeType).map((label) 
 const selectedExtension = ref(undefined);
 
 const mimeTypeFound = computed(() => (selectedExtension.value ? extensionToMimeType[selectedExtension.value] : []));
+
+const snippetCode = `import { types, extensions } from 'mime-types';
+
+// Extension → MIME type
+const mimeType = types['{{ext}}'];
+// => '{{mimeType}}'
+
+// MIME type → Extensions
+const exts = extensions['{{selectedMime}}'];
+// => {{exts}}`;
+
+const snippetVars = computed(() => ({
+  ext: selectedExtension.value ?? 'pdf',
+  mimeType: selectedExtension.value ? String(extensionToMimeType[selectedExtension.value] || 'application/pdf') : 'application/pdf',
+  selectedMime: selectedMimeType.value ?? 'application/pdf',
+  exts: JSON.stringify(selectedMimeType.value ? mimeTypeToExtension[selectedMimeType.value] : ['pdf']),
+}));
 </script>
 
 <template>
@@ -27,10 +45,7 @@ const mimeTypeFound = computed(() => (selectedExtension.value ? extensionToMimeT
       Know which file extensions are associated to a mime-type
     </div>
     <c-select
-      v-model:value="selectedMimeType"
-      searchable
-      my-4
-      :options="mimeToExtensionsOptions"
+      v-model:value="selectedMimeType" searchable my-4 :options="mimeToExtensionsOptions"
       placeholder="Select your mimetype here... (ex: application/pdf)"
     />
 
@@ -40,11 +55,7 @@ const mimeTypeFound = computed(() => (selectedExtension.value ? extensionToMimeT
       </n-tag> mime-type:
       <div style="margin-top: 10px">
         <n-tag
-          v-for="extension of extensionsFound"
-          :key="extension"
-          round
-          :bordered="false"
-          type="primary"
+          v-for="extension of extensionsFound" :key="extension" round :bordered="false" type="primary"
           style="margin-right: 10px"
         >
           .{{ extension }}
@@ -61,10 +72,7 @@ const mimeTypeFound = computed(() => (selectedExtension.value ? extensionToMimeT
       Know which mime type is associated to a file extension
     </div>
     <c-select
-      v-model:value="selectedExtension"
-      searchable
-      my-4
-      :options="extensionToMimeTypeOptions"
+      v-model:value="selectedExtension" searchable my-4 :options="extensionToMimeTypeOptions"
       placeholder="Select your mimetype here... (ex: application/pdf)"
     />
 
@@ -101,4 +109,8 @@ const mimeTypeFound = computed(() => (selectedExtension.value ? extensionToMimeT
       </tbody>
     </n-table>
   </div>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

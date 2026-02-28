@@ -4,6 +4,7 @@ import { generateRandomMacAddress } from './mac-adress-generator.models';
 import { computedRefreshable } from '@/composable/computedRefreshable';
 import { useCopy } from '@/composable/copy';
 import { usePartialMacAddressValidation } from '@/utils/macAddress';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const amount = useStorage('mac-address-generator-amount', 1);
 const macAddressPrefix = useStorage('mac-address-generator-prefix', '64:16:7F');
@@ -17,22 +18,10 @@ const casesTransformers = [
 const caseTransformer = ref(casesTransformers[0].value);
 
 const separators = [
-  {
-    label: ':',
-    value: ':',
-  },
-  {
-    label: '-',
-    value: '-',
-  },
-  {
-    label: '.',
-    value: '.',
-  },
-  {
-    label: 'None',
-    value: '',
-  },
+  { label: ':', value: ':' },
+  { label: '-', value: '-' },
+  { label: '.', value: '.' },
+  { label: 'None', value: '' },
 ];
 const separator = useStorage('mac-address-generator-separator', separators[0].value);
 
@@ -49,6 +38,26 @@ const [macAddresses, refreshMacAddresses] = computedRefreshable(() => {
 });
 
 const { copy } = useCopy({ source: macAddresses, text: 'MAC addresses copied to the clipboard' });
+
+const snippetCode = `// Generate a random MAC address
+function randomHex() {
+  return Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase();
+}
+
+function generateMacAddress(prefix = '', sep = ':') {
+  const parts = prefix ? prefix.split(':') : [];
+  while (parts.length < 6) parts.push(randomHex());
+  return parts.join(sep);
+}
+
+const mac = generateMacAddress('{{prefix}}', ':');
+console.log(mac);
+// => {{output}}`;
+
+const snippetVars = computed(() => ({
+  prefix: macAddressPrefix.value,
+  output: macAddresses.value.split('\n')[0] || '',
+}));
 </script>
 
 <template>
@@ -99,5 +108,9 @@ const { copy } = useCopy({ source: macAddresses, text: 'MAC addresses copied to 
         Copy
       </c-button>
     </div>
+
+    <c-card title="Code snippet">
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

@@ -28,6 +28,7 @@ import {
 } from './date-time-converter.models';
 import { withDefaultOnError } from '@/utils/defaults';
 import { useValidation } from '@/composable/validation';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const inputDate = ref('');
 
@@ -147,6 +148,36 @@ function formatDateUsingFormatter(formatter: (date: Date) => string, date?: Date
 
   return withDefaultOnError(() => formatter(date), '');
 }
+
+const currentDate = computed(() => normalizedDate.value ?? now.value);
+
+const snippetCode = `import { formatISO, formatRFC3339, getUnixTime, fromUnixTime } from 'date-fns';
+
+// Parse a date string and convert to various formats
+const date = new Date('{{input}}');
+
+const iso8601 = formatISO(date);
+console.log('ISO 8601:', iso8601); // => {{iso8601}}
+
+const unixTimestamp = getUnixTime(date);
+console.log('Unix Timestamp:', unixTimestamp); // => {{unix}}
+
+const rfc3339 = formatRFC3339(date);
+console.log('RFC 3339:', rfc3339); // => {{rfc3339}}
+
+// Convert Unix timestamp back to Date
+const backToDate = fromUnixTime(unixTimestamp);
+console.log('Back to Date:', backToDate.toISOString());`;
+
+const snippetVars = computed(() => {
+  const d = currentDate.value;
+  return {
+    input: d.toISOString().slice(0, 19),
+    iso8601: withDefaultOnError(() => formatISO(d), ''),
+    unix: withDefaultOnError(() => String(getUnixTime(d)), ''),
+    rfc3339: withDefaultOnError(() => formatRFC3339(d), ''),
+  };
+});
 </script>
 
 <template>
@@ -185,5 +216,9 @@ function formatDateUsingFormatter(formatter: (date: Date) => string, date?: Date
       readonly
       mt-2
     />
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

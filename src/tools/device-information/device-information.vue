@@ -1,7 +1,24 @@
 <script setup lang="ts">
 import { useWindowSize } from '@vueuse/core';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const { width, height } = useWindowSize();
+
+const snippetCode = `// Get device and screen information in the browser
+
+const screenWidth  = window.screen.availWidth;   // => {{screenWidth}}
+const screenHeight = window.screen.availHeight;  // => {{screenHeight}}
+const pixelRatio   = window.devicePixelRatio;    // => {{pixelRatio}}
+const platform     = navigator.platform;         // => '{{platform}}'
+const userAgent    = navigator.userAgent;        // => '{{userAgent}}'`;
+
+const snippetVars = computed(() => ({
+  screenWidth: String(window.screen?.availWidth ?? 0),
+  screenHeight: String(window.screen?.availHeight ?? 0),
+  pixelRatio: String(window.devicePixelRatio ?? 1),
+  platform: navigator.platform ?? '',
+  userAgent: (navigator.userAgent ?? '').slice(0, 50),
+}));
 
 const sections = [
   {
@@ -76,6 +93,10 @@ const sections = [
       </n-gi>
     </n-grid>
   </c-card>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>
 
 <style lang="less" scoped>
@@ -90,6 +111,7 @@ const sections = [
     line-height: 1;
     margin-bottom: 5px;
   }
+
   .value {
     font-size: 20px;
     font-weight: 400;

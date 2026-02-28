@@ -5,6 +5,7 @@ import type { ShadowRootExpose } from 'vue-shadow-dom';
 import { matchRegex } from './regex-tester.service';
 import { useValidation } from '@/composable/validation';
 import { useQueryParamOrStorage } from '@/composable/queryParams';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const regex = useQueryParamOrStorage({ name: 'regex', storageName: 'regex-tester:regex', defaultValue: '' });
 const text = ref('');
@@ -88,17 +89,30 @@ watchEffect(
     }
   },
 );
+
+const snippetCode = `// Test a regex pattern against a string
+const regex = /{{pattern}}/g;
+const text = '{{text}}';
+
+const matches = [...text.matchAll(regex)];
+console.log('Match count:', matches.length); // => {{matchCount}}
+
+for (const match of matches) {
+  console.log('Found:', match[0], 'at index:', match.index);
+}`;
+
+const snippetVars = computed(() => ({
+  pattern: regex.value.replace(/\//g, '\\/').slice(0, 30),
+  text: text.value.slice(0, 40),
+  matchCount: String(results.value?.length ?? 0),
+}));
 </script>
 
 <template>
   <div max-w-600px>
     <c-card title="Regex" mb-1>
       <c-input-text
-        v-model:value="regex"
-        label="Regex to test:"
-        placeholder="Put the regex to test"
-        multiline
-        rows="3"
+        v-model:value="regex" label="Regex to test:" placeholder="Put the regex to test" multiline rows="3"
         :validation="regexValidation"
       />
       <router-link target="_blank" to="/regex-memo" mb-1 mt-1>
@@ -128,10 +142,7 @@ watchEffect(
       <n-divider />
 
       <c-input-text
-        v-model:value="text"
-        label="Text to match:"
-        placeholder="Put the text to match"
-        multiline
+        v-model:value="text" label="Text to match:" placeholder="Put the text to match" multiline
         rows="5"
       />
     </c-card>
@@ -186,8 +197,12 @@ watchEffect(
 
     <c-card title="Regex Diagram" style="overflow-x: scroll;" mt-3>
       <shadow-root ref="visualizerSVG">
-&#xa0;
+        &#xa0;
       </shadow-root>
+    </c-card>
+
+    <c-card title="Code snippet" mt-3>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
     </c-card>
   </div>
 </template>

@@ -7,6 +7,7 @@ import hwbPlugin from 'colord/plugins/hwb';
 import namesPlugin from 'colord/plugins/names';
 import lchPlugin from 'colord/plugins/lch';
 import { buildColorFormat } from './color-converter.models';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 extend([cmykPlugin, hwbPlugin, namesPlugin, lchPlugin]);
 
@@ -70,34 +71,52 @@ function updateColorValue(value: Colord | undefined, omitLabel?: string) {
     }
   });
 }
+
+const snippetCode = `import { colord, extend } from 'colord';
+import cmykPlugin from 'colord/plugins/cmyk';
+
+extend([cmykPlugin]);
+
+const input = "{{input}}";
+
+const color = colord(input);
+console.log(color.toHex());        // => "{{hex}}"
+console.log(color.toRgbString());  // => "{{rgb}}"
+console.log(color.toHslString());  // => "{{hsl}}"
+console.log(color.toCmykString()); // => "{{cmyk}}"`;
+
+const snippetVars = computed(() => ({
+  input: formats.hex.value.value,
+  hex: formats.hex.value.value,
+  rgb: formats.rgb.value.value,
+  hsl: formats.hsl.value.value,
+  cmyk: formats.cmyk.value.value,
+}));
 </script>
 
 <template>
   <c-card>
     <template v-for="({ label, parse, placeholder, validation, type }, key) in formats" :key="key">
       <input-copyable
-        v-if="type === 'text'"
-        v-model:value="formats[key].value.value"
-        :test-id="`input-${key}`"
-        :label="`${label}:`"
-        label-position="left"
-        label-width="100px"
-        label-align="right"
-        :placeholder="placeholder"
-        :validation="validation"
-        raw-text
-        clearable
-        mt-2
-        @update:value="(v:string) => updateColorValue(parse(v), key)"
+        v-if="type === 'text'" v-model:value="formats[key].value.value" :test-id="`input-${key}`"
+        :label="`${label}:`" label-position="left" label-width="100px" label-align="right" :placeholder="placeholder"
+        :validation="validation" raw-text clearable mt-2
+        @update:value="(v: string) => updateColorValue(parse(v), key)"
       />
 
-      <n-form-item v-else-if="type === 'color-picker'" :label="`${label}:`" label-width="100" label-placement="left" :show-feedback="false">
+      <n-form-item
+        v-else-if="type === 'color-picker'" :label="`${label}:`" label-width="100" label-placement="left"
+        :show-feedback="false"
+      >
         <n-color-picker
-          v-model:value="formats[key].value.value"
-          placement="bottom-end"
-          @update:value="(v:string) => updateColorValue(parse(v), key)"
+          v-model:value="formats[key].value.value" placement="bottom-end"
+          @update:value="(v: string) => updateColorValue(parse(v), key)"
         />
       </n-form-item>
     </template>
+  </c-card>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
   </c-card>
 </template>

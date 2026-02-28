@@ -5,6 +5,7 @@ import type { Ipv4RangeExpanderResult } from './ipv4-range-expander.types';
 import { calculateCidr } from './ipv4-range-expander.service';
 import ResultRow from './result-row.vue';
 import { useValidation } from '@/composable/validation';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const rawStartAddress = useStorage('ipv4-range-expander:startAddress', '192.168.1.1');
 const rawEndAddress = useStorage('ipv4-range-expander:endAddress', '192.168.6.255');
@@ -16,26 +17,10 @@ const calculatedValues: {
   getOldValue: (result: Ipv4RangeExpanderResult | undefined) => string | undefined
   getNewValue: (result: Ipv4RangeExpanderResult | undefined) => string | undefined
 }[] = [
-  {
-    label: 'Start address',
-    getOldValue: () => rawStartAddress.value,
-    getNewValue: result => result?.newStart,
-  },
-  {
-    label: 'End address',
-    getOldValue: () => rawEndAddress.value,
-    getNewValue: result => result?.newEnd,
-  },
-  {
-    label: 'Addresses in range',
-    getOldValue: result => result?.oldSize?.toLocaleString(),
-    getNewValue: result => result?.newSize?.toLocaleString(),
-  },
-  {
-    label: 'CIDR',
-    getOldValue: () => '',
-    getNewValue: result => result?.newCidr,
-  },
+  { label: 'Start address', getOldValue: () => rawStartAddress.value, getNewValue: result => result?.newStart },
+  { label: 'End address', getOldValue: () => rawEndAddress.value, getNewValue: result => result?.newEnd },
+  { label: 'Addresses in range', getOldValue: result => result?.oldSize?.toLocaleString(), getNewValue: result => result?.newSize?.toLocaleString() },
+  { label: 'CIDR', getOldValue: () => '', getNewValue: result => result?.newCidr },
 ];
 
 const startIpValidation = useValidation({
@@ -54,6 +39,27 @@ function onSwitchStartEndClicked() {
   rawStartAddress.value = rawEndAddress.value;
   rawEndAddress.value = tmpStart;
 }
+
+const snippetCode = `import { calculateCidr } from './ipv4-range-expander.service';
+
+// Expand an IPv4 range to the smallest CIDR block that covers it
+const startIp = '{{startIp}}';
+const endIp = '{{endIp}}';
+
+const result = calculateCidr({ startIp, endIp });
+console.log('CIDR:', result.newCidr);      // => {{cidr}}
+console.log('New start:', result.newStart); // => {{newStart}}
+console.log('New end:', result.newEnd);     // => {{newEnd}}
+console.log('Size:', result.newSize);       // => {{size}}`;
+
+const snippetVars = computed(() => ({
+  startIp: rawStartAddress.value,
+  endIp: rawEndAddress.value,
+  cidr: result.value?.newCidr ?? '',
+  newStart: result.value?.newStart ?? '',
+  newEnd: result.value?.newEnd ?? '',
+  size: String(result.value?.newSize ?? ''),
+}));
 </script>
 
 <template>
@@ -115,5 +121,9 @@ function onSwitchStartEndClicked() {
         Switch start and end IPv4 address
       </c-button>
     </n-alert>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

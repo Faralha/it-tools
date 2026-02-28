@@ -5,6 +5,7 @@ import {
   useWifiQRCode,
 } from './useQRCode';
 import { useDownloadFileFromBase64 } from '@/composable/downloadBase64';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const foreground = ref('#000000ff');
 const background = ref('#ffffffff');
@@ -33,6 +34,23 @@ const { qrcode, encryption } = useWifiQRCode({
 });
 
 const { download } = useDownloadFileFromBase64({ source: qrcode, filename: 'qr-code.png' });
+
+const snippetCode = `// WiFi QR Code format: WIFI:T:<auth>;S:<ssid>;P:<password>;;
+// Use 'qrcode' library to generate as image
+
+import QRCode from 'qrcode';
+
+const wifiString = 'WIFI:T:{{encryption}};S:{{ssid}};P:{{password}};;';
+const dataUrl = await QRCode.toDataURL(wifiString, { width: 400 });
+
+// Scan the QR code with a phone to connect to the WiFi network
+console.log('WiFi QR Code generated for network: {{ssid}}');`;
+
+const snippetVars = computed(() => ({
+  ssid: ssid.value ?? 'MyNetwork',
+  password: password.value ? '****' : '',
+  encryption: encryption.value ?? 'WPA',
+}));
 </script>
 
 <template>
@@ -40,14 +58,8 @@ const { download } = useDownloadFileFromBase64({ source: qrcode, filename: 'qr-c
     <div grid grid-cols-1 gap-12>
       <div>
         <c-select
-          v-model:value="encryption"
-          mb-4
-          label="Encryption method"
-          default-value="WPA"
-          label-position="left"
-          label-width="130px"
-          label-align="right"
-          :options="[
+          v-model:value="encryption" mb-4 label="Encryption method" default-value="WPA" label-position="left"
+          label-width="130px" label-align="right" :options="[
             {
               label: 'No password',
               value: 'nopass',
@@ -68,68 +80,36 @@ const { download } = useDownloadFileFromBase64({ source: qrcode, filename: 'qr-c
         />
         <div class="mb-6 flex flex-row items-center gap-2">
           <c-input-text
-            v-model:value="ssid"
-            label-position="left"
-            label-width="130px"
-            label-align="right"
-            label="SSID:"
-            rows="1"
-            autosize
-            placeholder="Your WiFi SSID..."
-            mb-6
+            v-model:value="ssid" label-position="left" label-width="130px" label-align="right" label="SSID:"
+            rows="1" autosize placeholder="Your WiFi SSID..." mb-6
           />
           <n-checkbox v-model:checked="isHiddenSSID">
             Hidden SSID
           </n-checkbox>
         </div>
         <c-input-text
-          v-if="encryption !== 'nopass'"
-          v-model:value="password"
-          label-position="left"
-          label-width="130px"
-          label-align="right"
-          label="Password:"
-          rows="1"
-          autosize
-          type="password"
-          placeholder="Your WiFi Password..."
+          v-if="encryption !== 'nopass'" v-model:value="password" label-position="left" label-width="130px"
+          label-align="right" label="Password:" rows="1" autosize type="password" placeholder="Your WiFi Password..."
           mb-6
         />
         <c-select
-          v-if="encryption === 'WPA2-EAP'"
-          v-model:value="eapMethod"
-          label="EAP method"
-          label-position="left"
-          label-width="130px"
-          label-align="right"
-          :options="EAPMethods.map((method) => ({ label: method, value: method }))"
-          searchable mb-4
+          v-if="encryption === 'WPA2-EAP'" v-model:value="eapMethod" label="EAP method" label-position="left"
+          label-width="130px" label-align="right"
+          :options="EAPMethods.map((method) => ({ label: method, value: method }))" searchable mb-4
         />
         <div v-if="encryption === 'WPA2-EAP'" class="mb-6 flex flex-row items-center gap-2">
           <c-input-text
-            v-model:value="eapIdentity"
-            label-position="left"
-            label-width="130px"
-            label-align="right"
-            label="Identity:"
-            rows="1"
-            autosize
-            placeholder="Your EAP Identity..."
-            mb-6
+            v-model:value="eapIdentity" label-position="left" label-width="130px" label-align="right"
+            label="Identity:" rows="1" autosize placeholder="Your EAP Identity..." mb-6
           />
           <n-checkbox v-model:checked="eapAnonymous">
             Anonymous?
           </n-checkbox>
         </div>
         <c-select
-          v-if="encryption === 'WPA2-EAP'"
-          v-model:value="eapPhase2Method"
-          label="EAP Phase 2 method"
-          label-position="left"
-          label-width="130px"
-          label-align="right"
-          :options="EAPPhase2Methods.map((method) => ({ label: method, value: method }))"
-          searchable mb-4
+          v-if="encryption === 'WPA2-EAP'" v-model:value="eapPhase2Method" label="EAP Phase 2 method"
+          label-position="left" label-width="130px" label-align="right"
+          :options="EAPPhase2Methods.map((method) => ({ label: method, value: method }))" searchable mb-4
         />
         <n-form label-width="130" label-placement="left">
           <n-form-item label="Foreground color:">
@@ -149,5 +129,9 @@ const { download } = useDownloadFileFromBase64({ source: qrcode, filename: 'qr-c
         </div>
       </div>
     </div>
+  </c-card>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
   </c-card>
 </template>

@@ -1,10 +1,25 @@
 <script setup lang="ts">
 import { textToNatoAlphabet } from './text-to-nato-alphabet.service';
 import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const input = ref('');
 const natoText = computed(() => textToNatoAlphabet({ text: input.value }));
 const { copy } = useCopy({ source: natoText, text: 'NATO alphabet string copied.' });
+
+const snippetCode = `import { textToNatoAlphabet } from './text-to-nato-alphabet.service';
+
+const input = '{{input}}';
+
+const nato = textToNatoAlphabet({ text: input });
+
+console.log(nato);
+// => {{output}}`;
+
+const snippetVars = computed(() => ({
+  input: input.value,
+  output: natoText.value.slice(0, 60),
+}));
 </script>
 
 <template>
@@ -31,5 +46,9 @@ const { copy } = useCopy({ source: natoText, text: 'NATO alphabet string copied.
         </c-button>
       </div>
     </div>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

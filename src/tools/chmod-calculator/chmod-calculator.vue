@@ -22,6 +22,36 @@ const permissions = ref({
 
 const octal = computed(() => computeChmodOctalRepresentation({ permissions: permissions.value }));
 const symbolic = computed(() => computeChmodSymbolicRepresentation({ permissions: permissions.value }));
+
+const snippetCode = `// Compute chmod octal from permissions
+const toOctal = (r, w, x) => (r ? 4 : 0) + (w ? 2 : 0) + (x ? 1 : 0);
+
+const ownerRWX  = [{{ownerR}}, {{ownerW}}, {{ownerX}}];
+const groupRWX  = [{{groupR}}, {{groupW}}, {{groupX}}];
+const publicRWX = [{{pubR}},   {{pubW}},   {{pubX}}];
+
+const octal = [
+  toOctal(...ownerRWX),
+  toOctal(...groupRWX),
+  toOctal(...publicRWX),
+].join('');
+
+console.log(octal);
+// => "{{output}}"
+console.log(\`chmod ${octal} path\`);`;
+
+const snippetVars = computed(() => ({
+  ownerR: String(permissions.value.owner.read),
+  ownerW: String(permissions.value.owner.write),
+  ownerX: String(permissions.value.owner.execute),
+  groupR: String(permissions.value.group.read),
+  groupW: String(permissions.value.group.write),
+  groupX: String(permissions.value.group.execute),
+  pubR: String(permissions.value.public.read),
+  pubW: String(permissions.value.public.write),
+  pubX: String(permissions.value.public.execute),
+  output: octal.value,
+}));
 </script>
 
 <template>
@@ -63,6 +93,10 @@ const symbolic = computed(() => computeChmodSymbolicRepresentation({ permissions
 
     <CodeSnippet :value="`chmod ${octal} path`" />
   </div>
+
+  <c-card title="Code snippet">
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>
 
 <style lang="less" scoped>
@@ -73,7 +107,9 @@ const symbolic = computed(() => computeChmodSymbolicRepresentation({ permissions
   color: v-bind('themeVars.primaryColor');
   margin: 20px 0;
 }
+
 .permission-table {
+
   td,
   th {
     padding: 15px;
@@ -83,11 +119,13 @@ const symbolic = computed(() => computeChmodSymbolicRepresentation({ permissions
     }
   }
 }
+
 .line-header {
   font-weight: bold;
   text-align: right;
   max-width: 80px;
 }
+
 .text-center {
   text-align: center;
 }

@@ -2,18 +2,11 @@
 import { useStorage } from '@vueuse/core';
 import { convert } from './list-converter.models';
 import type { ConvertOptions } from './list-converter.types';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const sortOrderOptions = [
-  {
-    label: 'Sort ascending',
-    value: 'asc',
-    disabled: false,
-  },
-  {
-    label: 'Sort descending',
-    value: 'desc',
-    disabled: false,
-  },
+  { label: 'Sort ascending', value: 'asc', disabled: false },
+  { label: 'Sort descending', value: 'desc', disabled: false },
 ];
 
 const conversionConfig = useStorage<ConvertOptions>('list-converter:conversionConfig', {
@@ -30,9 +23,39 @@ const conversionConfig = useStorage<ConvertOptions>('list-converter:conversionCo
   separator: ', ',
 });
 
-function transformer(value: string) {
-  return convert(value, conversionConfig.value);
-}
+const inputValue = ref('item1\nitem2\nitem3\nitem4');
+
+const outputValue = computed(() => {
+  try {
+    return convert(inputValue.value, conversionConfig.value);
+  }
+  catch {
+    return '';
+  }
+});
+
+const snippetCode = `import { convert } from './list-converter.models';
+
+const input = \`{{input}}\`;
+
+const result = convert(input, {
+  separator: '{{separator}}',
+  trimItems: true,
+  removeDuplicates: true,
+  itemPrefix: '{{itemPrefix}}',
+  itemSuffix: '{{itemSuffix}}',
+});
+
+console.log(result);
+// => {{output}}`;
+
+const snippetVars = computed(() => ({
+  input: inputValue.value.replace(/\n/g, '\\n').slice(0, 50),
+  separator: conversionConfig.value.separator,
+  itemPrefix: conversionConfig.value.itemPrefix,
+  itemSuffix: conversionConfig.value.itemSuffix,
+  output: outputValue.value.replace(/\n/g, ' ').slice(0, 60),
+}));
 </script>
 
 <template>
@@ -47,13 +70,7 @@ function transformer(value: string) {
             <n-form-item label="Remove duplicates" label-placement="left" label-width="150" :show-feedback="false" mb-2>
               <n-switch v-model:value="conversionConfig.removeDuplicates" data-test-id="removeDuplicates" />
             </n-form-item>
-            <n-form-item
-              label="Convert to lowercase"
-              label-placement="left"
-              label-width="150"
-              :show-feedback="false"
-              mb-2
-            >
+            <n-form-item label="Convert to lowercase" label-placement="left" label-width="150" :show-feedback="false" mb-2>
               <n-switch v-model:value="conversionConfig.lowerCase" />
             </n-form-item>
             <n-form-item label="Keep line breaks" label-placement="left" label-width="150" :show-feedback="false" mb-2>
@@ -86,28 +103,12 @@ function transformer(value: string) {
             />
 
             <n-form-item label="Wrap item" label-placement="left" label-width="120" :show-feedback="false" mb-2>
-              <c-input-text
-                v-model:value="conversionConfig.itemPrefix"
-                placeholder="Item prefix"
-                test-id="itemPrefix"
-              />
-              <c-input-text
-                v-model:value="conversionConfig.itemSuffix"
-                placeholder="Item suffix"
-                test-id="itemSuffix"
-              />
+              <c-input-text v-model:value="conversionConfig.itemPrefix" placeholder="Item prefix" test-id="itemPrefix" />
+              <c-input-text v-model:value="conversionConfig.itemSuffix" placeholder="Item suffix" test-id="itemSuffix" />
             </n-form-item>
             <n-form-item label="Wrap list" label-placement="left" label-width="120" :show-feedback="false" mb-2>
-              <c-input-text
-                v-model:value="conversionConfig.listPrefix"
-                placeholder="List prefix"
-                test-id="listPrefix"
-              />
-              <c-input-text
-                v-model:value="conversionConfig.listSuffix"
-                placeholder="List suffix"
-                test-id="listSuffix"
-              />
+              <c-input-text v-model:value="conversionConfig.listPrefix" placeholder="List prefix" test-id="listPrefix" />
+              <c-input-text v-model:value="conversionConfig.listSuffix" placeholder="List suffix" test-id="listSuffix" />
             </n-form-item>
           </div>
         </div>
@@ -118,6 +119,12 @@ function transformer(value: string) {
     input-label="Your input data"
     input-placeholder="Paste your input data here..."
     output-label="Your transformed data"
-    :transformer="transformer"
+    :transformer="(value) => convert(value, conversionConfig)"
   />
+
+  <div style="margin: 16px auto; max-width: 600px">
+    <c-card title="Code snippet">
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
+  </div>
 </template>

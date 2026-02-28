@@ -41,6 +41,18 @@ const [uuids, refreshUUIDs] = computedRefreshable(() => withDefaultOnError(() =>
     const generator = generators[version.value] ?? generators.NIL;
     return generator(index);
   }).join('\n'), ''));
+
+const snippetCode = `import { v4 as generateUuidV4 } from 'uuid';
+
+// Generate a random UUID v4
+const uuid = generateUuidV4();
+
+console.log(uuid);
+// {{output}}`;
+
+const snippetVars = computed(() => ({
+  output: uuids.value.split('\n')[0] || '',
+}));
 </script>
 
 <template>
@@ -96,6 +108,10 @@ const [uuids, refreshUUIDs] = computedRefreshable(() => withDefaultOnError(() =>
         Refresh
       </c-button>
     </div>
+
+    <c-card title="Code snippet" mt-3>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>
 

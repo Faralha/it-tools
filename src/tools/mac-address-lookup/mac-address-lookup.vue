@@ -2,29 +2,34 @@
 import db from 'oui-data';
 import { macAddressValidationRules } from '@/utils/macAddress';
 import { useCopy } from '@/composable/copy';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const getVendorValue = (address: string) => address.trim().replace(/[.:-]/g, '').toUpperCase().substring(0, 6);
 
 const macAddress = ref('20:37:06:12:34:56');
 const details = computed<string | undefined>(() => (db as Record<string, string>)[getVendorValue(macAddress.value)]);
-
 const { copy } = useCopy({ source: () => details.value ?? '', text: 'Vendor info copied to the clipboard' });
+
+const snippetCode = `import db from 'oui-data';
+
+// Normalize MAC address to first 6 hex chars (OUI prefix)
+const oui = '{{mac}}'.replace(/[.:-]/g, '').toUpperCase().substring(0, 6);
+
+const vendor = db[oui];
+// => '{{vendor}}'`;
+
+const snippetVars = computed(() => ({
+  mac: macAddress.value,
+  vendor: details.value?.split('\n')[0]?.slice(0, 60) ?? 'Unknown',
+}));
 </script>
 
 <template>
   <div>
     <c-input-text
-      v-model:value="macAddress"
-      label="MAC address:"
-      size="large"
-      placeholder="Type a MAC address"
-      clearable
-      autocomplete="off"
-      autocorrect="off"
-      autocapitalize="off"
-      spellcheck="false"
-      :validation-rules="macAddressValidationRules"
-      mb-5
+      v-model:value="macAddress" label="MAC address:" size="large" placeholder="Type a MAC address"
+      clearable autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      :validation-rules="macAddressValidationRules" mb-5
     />
 
     <div mb-5px>
@@ -47,5 +52,9 @@ const { copy } = useCopy({ source: () => details.value ?? '', text: 'Vendor info
         Copy vendor info
       </c-button>
     </div>
+
+    <c-card title="Code snippet" mt-5>
+      <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+    </c-card>
   </div>
 </template>

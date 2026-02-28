@@ -76,7 +76,7 @@ const decodeSnippetVars = computed(() => ({
   </c-card>
 
   <c-card title="Code snippet — Encode">
-    <code-snippet :code="encodeSnippetCode" :variables="encodeSnippetVars" language="javascript" />
+    <CodeSnippet :code="encodeSnippetCode" :variables="encodeSnippetVars" language="javascript" />
   </c-card>
 
   <c-card title="Base64 to string">
@@ -97,6 +97,6 @@ const decodeSnippetVars = computed(() => ({
   </c-card>
 
   <c-card title="Code snippet — Decode">
-    <code-snippet :code="decodeSnippetCode" :variables="decodeSnippetVars" language="javascript" />
+    <CodeSnippet :code="decodeSnippetCode" :variables="decodeSnippetVars" language="javascript" />
   </c-card>
 </template>

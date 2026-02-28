@@ -2,6 +2,7 @@
 import { useEventListener } from '@vueuse/core';
 
 import InputCopyable from '../../components/InputCopyable.vue';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const event = ref<KeyboardEvent>();
 
@@ -50,6 +51,21 @@ const fields = computed(() => {
     },
   ];
 });
+
+const snippetCode = `// Listen for keyboard events in the browser
+document.addEventListener('keydown', (event) => {
+  const key     = event.key;      // => '{{key}}'
+  const keyCode = event.keyCode;  // => {{keyCode}}
+  const code    = event.code;     // => '{{code}}'
+
+  console.log({ key, keyCode, code });
+});`;
+
+const snippetVars = computed(() => ({
+  key: event.value?.key ?? 'Enter',
+  keyCode: String(event.value?.keyCode ?? 13),
+  code: event.value?.code ?? 'Enter',
+}));
 </script>
 
 <template>
@@ -70,4 +86,8 @@ const fields = computed(() => {
       <InputCopyable :value="value" readonly :placeholder="placeholder" />
     </n-input-group>
   </div>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

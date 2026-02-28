@@ -7,7 +7,7 @@ import CodeSnippet from '@/components/CodeSnippet.vue';
 
 // Since type guards do not work in template
 
-const metadata = ref<{ type: string; [k: string]: any }>({
+const metadata = ref<{ type: string;[k: string]: any }>({
   'type': 'website',
   'twitter:card': 'summary_large_image',
 });
@@ -48,6 +48,25 @@ const metaTags = computed(() => {
 
   return generateMeta({ ...otherMeta, twitter: twitterMeta }, { generateTwitterCompatibleMeta: true });
 });
+
+const snippetCode = `import { generateMeta } from '@it-tools/oggen';
+
+const meta = generateMeta({
+  type:        '{{type}}',
+  title:       '{{title}}',
+  description: '{{description}}',
+  url:         '{{url}}',
+}, { generateTwitterCompatibleMeta: true });
+
+// => {{output}}`;
+
+const snippetVars = computed(() => ({
+  type: metadata.value.type ?? 'website',
+  title: (metadata.value.title ?? '') as string,
+  description: (metadata.value.description ?? '') as string,
+  url: (metadata.value.url ?? '') as string,
+  output: metaTags.value.replace(/\n/g, ' ').slice(0, 80),
+}));
 </script>
 
 <template>
@@ -64,19 +83,12 @@ const metaTags = computed(() => {
 
         <c-input-text v-if="type === 'input'" v-model:value="metadata[key]" :placeholder="placeholder" clearable />
         <n-dynamic-input
-          v-else-if="type === 'input-multiple'"
-          v-model:value="metadata[key]"
-          :min="1"
-          :placeholder="placeholder"
-          :default-value="['']"
-          :show-sort-button="true"
+          v-else-if="type === 'input-multiple'" v-model:value="metadata[key]" :min="1"
+          :placeholder="placeholder" :default-value="['']" :show-sort-button="true"
         />
 
         <c-select
-          v-else-if="type === 'select'"
-          v-model:value="metadata[key]"
-          w-full
-          :placeholder="placeholder"
+          v-else-if="type === 'select'" v-model:value="metadata[key]" w-full :placeholder="placeholder"
           :options="(element as OGSchemaTypeElementSelect).options"
         />
       </n-input-group>
@@ -87,6 +99,10 @@ const metaTags = computed(() => {
       <CodeSnippet :value="metaTags" language="html" />
     </n-form-item>
   </div>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>
 
 <style lang="less" scoped>
@@ -97,6 +113,7 @@ const metaTags = computed(() => {
 ::v-deep(.n-form-item-blank) {
   min-height: 0 !important;
 }
+
 ::v-deep(.n-dynamic-input-item) {
   margin-bottom: 5px;
 }

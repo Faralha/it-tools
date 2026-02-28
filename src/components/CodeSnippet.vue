@@ -12,21 +12,37 @@ import { useCopy } from '@/composable/copy';
 
 const props = withDefaults(
   defineProps<{
-    value: string
+    /** New API: template string with {{varName}} placeholders */
+    code?: string
+    /** New API: map of variable names to values */
+    variables?: Record<string, string>
+    /** New API: title displayed in the header */
+    title?: string
+    /** Legacy API: plain code string to display */
+    value?: string
+    /** Legacy API: label rendered above the card */
     label?: string
+    /** Legacy API: element whose height the code block should follow */
     followHeightOf?: HTMLElement | null
-    language?: string
+    /** Legacy API: placement of the floating copy button */
     copyPlacement?: 'top-right' | 'bottom-right' | 'outside' | 'none'
+    /** Copy button tooltip / label */
     copyMessage?: string
+    language?: string
   }>(),
   {
+    code: undefined,
+    variables: () => ({}),
+    title: undefined,
+    value: undefined,
     label: undefined,
     followHeightOf: null,
-    language: 'txt',
     copyPlacement: 'top-right',
     copyMessage: 'Copy to clipboard',
+    language: 'txt',
   },
 );
+
 hljs.registerLanguage('sql', sqlHljs);
 hljs.registerLanguage('json', jsonHljs);
 hljs.registerLanguage('html', xmlHljs);
@@ -35,95 +51,55 @@ hljs.registerLanguage('yaml', yamlHljs);
 hljs.registerLanguage('toml', iniHljs);
 hljs.registerLanguage('markdown', markdownHljs);
 
-const { value, language, followHeightOf, copyPlacement, copyMessage } = toRefs(props);
+const { followHeightOf } = toRefs(props);
 const { height } = followHeightOf.value ? useElementSize(followHeightOf) : { height: ref(null) };
 
-const { copy, isJustCopied } = useCopy({ source: value, createToast: false });
-const tooltipText = computed(() => isJustCopied.value ? 'Copied!' : copyMessage.value);
-</script>
+// Determine which API is in use
+const useNewApi = computed(() => props.code !== undefined);
 
-<template>
-  <div style="overflow-x: hidden; width: 100%">
-    <div v-if="label" mb-1 op-60 text-sm>
-      {{ label }}
-    </div>
-    <c-card relative>
-      <n-scrollbar
-        x-scrollable
-        trigger="none"
-        :style="height ? `min-height: ${height - 40 /* card padding */ + 10 /* negative margin compensation */}px` : ''"
-      >
-        <n-config-provider :hljs="hljs">
-          <n-code :code="value" :language="language" :trim="false" data-test-id="area-content" />
-        </n-config-provider>
-      </n-scrollbar>
-      <div absolute right-10px top-10px>
-        <c-tooltip v-if="value" :tooltip="tooltipText" position="left">
-          <c-button circle important:h-10 important:w-10 @click="copy()">
-            <n-icon size="22" :component="Copy" />
-          </c-button>
-        </c-tooltip>
-      </div>
-    </c-card>
-    <div v-if="copyPlacement === 'outside'" mt-4 flex justify-center>
-      <c-button @click="copy()">
-        {{ tooltipText }}
-      </c-button>
-    </div>
-  </div>
-</template>
-
-<style lang="less" scoped>
-::v-deep(.n-scrollbar) {
-  padding-bottom: 10px;
-  margin-bottom: -10px;
-}
-</style>
-
-<script setup lang="ts">
-import { useCopy } from '@/composable/copy';
-
-const props = defineProps<{
-  code: string
-  variables: Record<string, string>
-  language?: string
-  title?: string
-}>();
-
+// --- New API: variable-interpolation segments ---
 type Segment = { type: 'text'; value: string } | { type: 'variable'; name: string; value: string };
 
 const segments = computed<Segment[]>(() => {
+  const source = props.code ?? '';
+  const vars = props.variables ?? {};
   const parts: Segment[] = [];
   const regex = /\{\{(\w+)\}\}/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
   // eslint-disable-next-line no-cond-assign
-  while ((match = regex.exec(props.code)) !== null) {
+  while ((match = regex.exec(source)) !== null) {
     if (match.index > lastIndex) {
-      parts.push({ type: 'text', value: props.code.slice(lastIndex, match.index) });
+      parts.push({ type: 'text', value: source.slice(lastIndex, match.index) });
     }
     const varName = match[1];
-    parts.push({ type: 'variable', name: varName, value: props.variables[varName] ?? '' });
+    parts.push({ type: 'variable', name: varName, value: vars[varName] ?? '' });
     lastIndex = regex.lastIndex;
   }
 
-  if (lastIndex < props.code.length) {
-    parts.push({ type: 'text', value: props.code.slice(lastIndex) });
+  if (lastIndex < source.length) {
+    parts.push({ type: 'text', value: source.slice(lastIndex) });
   }
 
   return parts;
 });
 
 const renderedCode = computed(() =>
-  segments.value.map(s => (s.type === 'text' ? s.value : s.value)).join(''),
+  segments.value.map(s => s.value).join(''),
 );
 
-const { copy, isJustCopied } = useCopy({ source: renderedCode, text: 'Code copied to clipboard' });
+// New API copies rendered code; legacy API copies the raw value.
+const legacyValue = computed(() => props.value ?? '');
+const copySource = computed(() => useNewApi.value ? renderedCode.value : legacyValue.value);
+
+const { copy, isJustCopied } = useCopy({ source: copySource, createToast: false });
+const tooltipText = computed(() => isJustCopied.value ? 'Copied!' : props.copyMessage);
 </script>
 
 <template>
-  <div class="code-snippet">
+  <!-- New API: header + variable-interpolation display -->
+  <div v-if="useNewApi" class="code-snippet">
     <div class="code-snippet-header">
       <span class="code-snippet-lang">{{ language ?? 'javascript' }}</span>
       <span v-if="title" class="code-snippet-title">{{ title }}</span>
@@ -153,12 +129,48 @@ const { copy, isJustCopied } = useCopy({ source: renderedCode, text: 'Code copie
     <pre class="code-snippet-body"><code><span
       v-for="(segment, i) in segments" :key="i"
       :class="segment.type === 'variable' ? `code-var code-var--${segment.name}` : 'code-text'"
-    >{{ segment.type
-      === 'variable' ? segment.value || `<${segment.name}>` : segment.value }}</span></code></pre>
+    >{{ segment.type === 'variable' ? segment.value || `<${segment.name}>` : segment.value }}</span></code></pre>
+  </div>
+
+  <!-- Legacy API: n-code with syntax highlighting -->
+  <div v-else style="overflow-x: hidden; width: 100%">
+    <div v-if="label" mb-1 text-sm op-60>
+      {{ label }}
+    </div>
+    <c-card relative>
+      <n-scrollbar
+        x-scrollable
+        trigger="none"
+        :style="height ? `min-height: ${height - 40 /* card padding */ + 10 /* negative margin compensation */}px` : ''"
+      >
+        <n-config-provider :hljs="hljs">
+          <n-code :code="legacyValue" :language="language" :trim="false" data-test-id="area-content" />
+        </n-config-provider>
+      </n-scrollbar>
+      <div v-if="copyPlacement !== 'none'" absolute right-10px top-10px>
+        <c-tooltip v-if="legacyValue" :tooltip="tooltipText" position="left">
+          <c-button circle important:h-10 important:w-10 @click="copy()">
+            <n-icon size="22" :component="Copy" />
+          </c-button>
+        </c-tooltip>
+      </div>
+    </c-card>
+    <div v-if="copyPlacement === 'outside'" mt-4 flex justify-center>
+      <c-button @click="copy()">
+        {{ tooltipText }}
+      </c-button>
+    </div>
   </div>
 </template>
 
 <style lang="less" scoped>
+/* Legacy scrollbar compensation */
+::v-deep(.n-scrollbar) {
+  padding-bottom: 10px;
+  margin-bottom: -10px;
+}
+
+/* New API styles */
 .code-snippet {
   border-radius: 6px;
   overflow: hidden;

@@ -2,6 +2,7 @@
 import verifyPDF from 'pdf-signature-reader';
 import type { SignatureInfo } from './pdf-signature-checker.types';
 import { formatBytes } from '@/utils/convert';
+import CodeSnippet from '@/components/CodeSnippet.vue';
 
 const signatures = ref<SignatureInfo[]>([]);
 const status = ref<'idle' | 'parsed' | 'error' | 'loading'>('idle');
@@ -22,12 +23,31 @@ async function onVerifyClicked(uploadedFile: File) {
     status.value = 'error';
   }
 }
+
+const snippetCode = `import verifyPDF from 'pdf-signature-reader';
+
+// Read the PDF file as ArrayBuffer
+const fileBuffer = await file.arrayBuffer();
+
+const { signatures } = verifyPDF(fileBuffer);
+
+// => Found {{signatureCount}} signature(s)
+signatures.forEach((sig, i) => {
+  console.log('Signature', i + 1, sig);
+});`;
+
+const snippetVars = computed(() => ({
+  signatureCount: String(signatures.value.length),
+}));
 </script>
 
 <template>
   <div style="flex: 0 0 100%">
     <div mx-auto max-w-600px>
-      <c-file-upload title="Drag and drop a PDF file here, or click to select a file" accept=".pdf" @file-upload="onVerifyClicked" />
+      <c-file-upload
+        title="Drag and drop a PDF file here, or click to select a file" accept=".pdf"
+        @file-upload="onVerifyClicked"
+      />
 
       <c-card v-if="file" mt-4 flex gap-2>
         <div font-bold>
@@ -56,4 +76,8 @@ async function onVerifyClicked(uploadedFile: File) {
       <pdf-signature-details :signature="signature" />
     </div>
   </div>
+
+  <c-card title="Code snippet" mt-5>
+    <CodeSnippet :code="snippetCode" :variables="snippetVars" language="javascript" />
+  </c-card>
 </template>

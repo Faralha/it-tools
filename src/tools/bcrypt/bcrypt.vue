@@ -12,25 +12,55 @@ const hashed = computed(() => hashSync(input.value, saltCount.value));
 const compareString = ref('');
 const compareHash = ref('');
 const compareMatch = computed(() => compareSync(compareString.value, compareHash.value));
+
+const hashSnippetCode = `import { hashSync } from 'bcryptjs';
+
+const input = "{{input}}";
+const saltRounds = {{saltCount}};
+
+const hash = hashSync(input, saltRounds);
+
+console.log(hash);
+// => "{{output}}"`;
+
+const hashSnippetVars = computed(() => ({
+  input: input.value,
+  saltCount: String(saltCount.value),
+  output: hashed.value,
+}));
+
+const compareSnippetCode = `import { compareSync } from 'bcryptjs';
+
+const input = "{{input}}";
+const hash = "{{hash}}";
+
+const match = compareSync(input, hash);
+
+console.log(match);
+// => {{output}}`;
+
+const compareSnippetVars = computed(() => ({
+  input: compareString.value,
+  hash: compareHash.value,
+  output: compareMatch.value ? 'true' : 'false',
+}));
 </script>
 
 <template>
   <c-card title="Hash">
     <c-input-text
-      v-model:value="input"
-      placeholder="Your string to bcrypt..."
-      raw-text
-      label="Your string: "
-      label-position="left"
-      label-align="right"
-      label-width="120px"
-      mb-2
+      v-model:value="input" placeholder="Your string to bcrypt..." raw-text label="Your string: "
+      label-position="left" label-align="right" label-width="120px" mb-2
     />
     <n-form-item label="Salt count: " label-placement="left" label-width="120">
       <n-input-number v-model:value="saltCount" placeholder="Salt rounds..." :max="100" :min="0" w-full />
     </n-form-item>
 
     <CodeSnippet :value="hashed" copy-message="Hashed string copied to the clipboard" />
+  </c-card>
+
+  <c-card title="Code snippet — Hash">
+    <CodeSnippet :code="hashSnippetCode" :variables="hashSnippetVars" language="javascript" />
   </c-card>
 
   <c-card title="Compare string with hash">
@@ -47,6 +77,10 @@ const compareMatch = computed(() => compareSync(compareString.value, compareHash
         </div>
       </n-form-item>
     </n-form>
+  </c-card>
+
+  <c-card title="Code snippet — Compare">
+    <CodeSnippet :code="compareSnippetCode" :variables="compareSnippetVars" language="javascript" />
   </c-card>
 </template>
 
