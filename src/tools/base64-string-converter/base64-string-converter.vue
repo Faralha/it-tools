@@ -22,6 +22,42 @@ const b64ValidationRules = [
   },
 ];
 const b64ValidationWatch = [decodeUrlSafe];
+
+const encodeSnippetCode = `import { Base64 } from 'js-base64';
+
+const input = "{{input}}";
+const urlSafe = {{urlSafe}};
+
+const output = urlSafe
+  ? Base64.encodeURI(input)
+  : Base64.encode(input);
+
+console.log(output);
+// => "{{output}}"`;
+
+const encodeSnippetVars = computed(() => ({
+  input: textInput.value,
+  urlSafe: String(encodeUrlSafe.value),
+  output: base64Output.value,
+}));
+
+const decodeSnippetCode = `import { Base64 } from 'js-base64';
+
+const input = "{{input}}";
+const urlSafe = {{urlSafe}};
+
+const output = urlSafe
+  ? Base64.decode(input.replace(/-/g, '+').replace(/_/g, '/'))
+  : Base64.decode(input);
+
+console.log(output);
+// => "{{output}}"`;
+
+const decodeSnippetVars = computed(() => ({
+  input: base64Input.value,
+  urlSafe: String(decodeUrlSafe.value),
+  output: textOutput.value,
+}));
 </script>
 
 <template>
@@ -30,23 +66,13 @@ const b64ValidationWatch = [decodeUrlSafe];
       <n-switch v-model:value="encodeUrlSafe" />
     </n-form-item>
     <c-input-text
-      v-model:value="textInput"
-      multiline
-      placeholder="Put your string here..."
-      rows="5"
-      label="String to encode"
-      raw-text
-      mb-5
+      v-model:value="textInput" multiline placeholder="Put your string here..." rows="5"
+      label="String to encode" raw-text mb-5
     />
 
     <c-input-text
-      label="Base64 of string"
-      :value="base64Output"
-      multiline
-      readonly
-      placeholder="The base64 encoding of your string will be here"
-      rows="5"
-      mb-5
+      label="Base64 of string" :value="base64Output" multiline readonly
+      placeholder="The base64 encoding of your string will be here" rows="5" mb-5
     />
 
     <div flex justify-center>
@@ -56,29 +82,23 @@ const b64ValidationWatch = [decodeUrlSafe];
     </div>
   </c-card>
 
+  <c-card title="Code snippet — Encode">
+    <code-snippet :code="encodeSnippetCode" :variables="encodeSnippetVars" language="javascript" />
+  </c-card>
+
   <c-card title="Base64 to string">
     <n-form-item label="Decode URL safe" label-placement="left">
       <n-switch v-model:value="decodeUrlSafe" />
     </n-form-item>
     <c-input-text
-      v-model:value="base64Input"
-      multiline
-      placeholder="Your base64 string..."
-      rows="5"
-      :validation-rules="b64ValidationRules"
-      :validation-watch="b64ValidationWatch"
-      label="Base64 string to decode"
+      v-model:value="base64Input" multiline placeholder="Your base64 string..." rows="5"
+      :validation-rules="b64ValidationRules" :validation-watch="b64ValidationWatch" label="Base64 string to decode"
       mb-5
     />
 
     <c-input-text
-      v-model:value="textOutput"
-      label="Decoded string"
-      placeholder="The decoded string will be here"
-      multiline
-      rows="5"
-      readonly
-      mb-5
+      v-model:value="textOutput" label="Decoded string" placeholder="The decoded string will be here"
+      multiline rows="5" readonly mb-5
     />
 
     <div flex justify-center>
@@ -86,5 +106,9 @@ const b64ValidationWatch = [decodeUrlSafe];
         Copy decoded string
       </c-button>
     </div>
+  </c-card>
+
+  <c-card title="Code snippet — Decode">
+    <code-snippet :code="decodeSnippetCode" :variables="decodeSnippetVars" language="javascript" />
   </c-card>
 </template>
