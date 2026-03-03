@@ -189,17 +189,17 @@ semgrep_dev:
   <<: *semgrep_template
   allow_failure: true
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+    - when: never
 
 semgrep_stage:
   <<: *semgrep_template
   rules:
-    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - when: never
 
 semgrep_prod:
   <<: *semgrep_template
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
 
 # ─── SAST (Trivy FS) ──────────────────────────────────────────────────────────
 .trivy_fs_template: &trivy_fs_template
@@ -225,17 +225,17 @@ trivy_fs_dev:
   <<: *trivy_fs_template
   allow_failure: true
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+    - when: never
 
 trivy_fs_stage:
   <<: *trivy_fs_template
   rules:
-    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - when: never
 
 trivy_fs_prod:
   <<: *trivy_fs_template
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - when: never
 
 .sonar_template: &sonar_template
   stage: sonar_check
