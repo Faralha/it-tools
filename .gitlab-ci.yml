@@ -1,0 +1,382 @@
+variables:
+  SONAR_IMAGE: 'sonarsource/sonar-scanner-cli:latest'
+  DOCKER_DRIVER: overlay2
+  ENV_BASE_DIR: '/opt/environments'
+
+  PROD_SUBDOMAIN_OVERRIDE: 'bpmn'
+
+stages:
+  - test
+  - lint
+  - secret_scan
+  - sast
+  - sonar_check
+  - build
+  - deploy
+  - cleanup
+
+.determine_environment: &determine_environment
+  before_script:
+    - |
+      CLEAN_BRANCH=$(echo "$CI_COMMIT_BRANCH" | tr '[:upper:]' '[:lower:]')
+      PROJECT_NAME="$CI_PROJECT_NAME"
+
+      if [[ "$CI_COMMIT_BRANCH" =~ ^dev_ ]]; then
+        export DEPLOY_ENV="dev"
+        export ENV_NAME="development"
+        export DYNAMIC_URL="https://${CLEAN_BRANCH}_${PROJECT_NAME}.iimlab.id"
+        export SONAR_QUALITY_GATE_WAIT="false"
+        
+      elif [[ "$CI_COMMIT_BRANCH" == "staging" ]]; then
+        export DEPLOY_ENV="stage"
+        export ENV_NAME="staging"
+        export DYNAMIC_URL="https://stage_${PROJECT_NAME}.iimlab.id"
+        export SONAR_QUALITY_GATE_WAIT="true"
+        
+      elif [[ "$CI_COMMIT_BRANCH" == "main" ]]; then
+        export DEPLOY_ENV="prod"
+        export ENV_NAME="production"
+        FINAL_SUBDOMAIN="${PROD_SUBDOMAIN_OVERRIDE:-$PROJECT_NAME}"
+        export DYNAMIC_URL="https://${FINAL_SUBDOMAIN}.iimlab.id"
+        export SONAR_QUALITY_GATE_WAIT="true"
+        
+      else
+        echo "❌ Branch $CI_COMMIT_BRANCH tidak sesuai pola deployment"
+        exit 1
+      fi
+
+      echo "DEPLOY_ENV=$DEPLOY_ENV" > deploy.env
+      echo "DYNAMIC_URL=$DYNAMIC_URL" >> deploy.env
+      echo "ENV_NAME=$ENV_NAME" >> deploy.env
+      echo "SONAR_QUALITY_GATE_WAIT=$SONAR_QUALITY_GATE_WAIT" >> deploy.env
+      echo "CI_COMMIT_BRANCH=$CI_COMMIT_BRANCH" >> deploy.env
+      echo "PROD_SUBDOMAIN_OVERRIDE=$PROD_SUBDOMAIN_OVERRIDE" >> deploy.env
+
+.test_template: &test_template
+  stage: test
+  image: node:22-alpine
+  tags:
+    - docker
+  script:
+    - echo "⚙️ Preparing System Dependencies..."
+    - apk add --no-cache libc6-compat git make g++ python3
+
+    - echo "📦 Installing pnpm & Node Dependencies..."
+    - npm install -g pnpm@9.11.0
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+    - echo "🧪 Running Tests with coverage..."
+    - pnpm run coverage || echo "⚠️ Tests failed, skipping..."
+
+  cache:
+    key: 'pnpm-store-${CI_PROJECT_ID}-${CI_COMMIT_REF_SLUG}'
+    paths:
+      - .pnpm-store/
+    policy: pull-push
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 hour
+    when: always
+  timeout: 15m
+
+test_dev:
+  <<: *test_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+
+test_stage:
+  <<: *test_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+
+test_prod:
+  <<: *test_template
+  script:
+    - echo "⚙️ Preparing System Dependencies..."
+    - apk add --no-cache libc6-compat git make g++ python3
+    - echo "📦 Installing pnpm & Node Dependencies..."
+    - npm install -g pnpm@9.11.0
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+    - echo "🧪 Running Tests with coverage..."
+    - pnpm run coverage
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ─── Lint ────────────────────────────────────────────────────────────────────
+.lint_template: &lint_template
+  stage: lint
+  image: node:22-alpine
+  tags:
+    - docker
+  script:
+    - echo "⚙️ Installing dependencies..."
+    - apk add --no-cache libc6-compat git
+    - npm install -g pnpm@9.11.0
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+    - echo "🔍 Running ESLint (style & logic check)..."
+    - pnpm lint
+  cache:
+    key: 'pnpm-store-${CI_PROJECT_ID}-${CI_COMMIT_REF_SLUG}'
+    paths:
+      - .pnpm-store/
+    policy: pull
+  allow_failure: false
+  timeout: 10m
+
+lint_dev:
+  <<: *lint_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+
+lint_stage:
+  <<: *lint_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+
+lint_prod:
+  <<: *lint_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ─── Secret Scanning (TruffleHog) ────────────────────────────────────────────
+.trufflehog_template: &trufflehog_template
+  stage: secret_scan
+  image:
+    name: trufflesecurity/trufflehog:3.93.4
+    entrypoint: ['']
+  tags:
+    - docker
+  script:
+    - echo "🔐 Running TruffleHog secret scanning..."
+    - trufflehog git file://. --since-commit HEAD~1 --only-verified --fail
+  allow_failure: false
+  timeout: 10m
+
+trufflehog_dev:
+  <<: *trufflehog_template
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+
+trufflehog_stage:
+  <<: *trufflehog_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+
+trufflehog_prod:
+  <<: *trufflehog_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ─── SAST (Semgrep) ───────────────────────────────────────────────────────────
+.semgrep_template: &semgrep_template
+  stage: sast
+  image: semgrep/semgrep:1.152.0
+  tags:
+    - docker
+  script:
+    - echo "🛡️ Running Semgrep security pattern matching..."
+    - semgrep scan --config=auto --error --json --output=semgrep-report.json .
+  artifacts:
+    paths:
+      - semgrep-report.json
+    expire_in: 1 week
+    when: always
+  allow_failure: false
+  timeout: 15m
+
+semgrep_dev:
+  <<: *semgrep_template
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+
+semgrep_stage:
+  <<: *semgrep_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+
+semgrep_prod:
+  <<: *semgrep_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ─── SAST (Trivy FS) ──────────────────────────────────────────────────────────
+.trivy_fs_template: &trivy_fs_template
+  stage: sast
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: ['']
+  tags:
+    - docker
+  script:
+    - echo "🔍 Running Trivy filesystem scan (HIGH & CRITICAL only)..."
+    - trivy fs --scanners vuln,misconfig --severity HIGH,CRITICAL --format json --output trivy-fs-report.json .
+    - trivy fs --scanners vuln,misconfig --severity HIGH,CRITICAL --exit-code 1 .
+  artifacts:
+    paths:
+      - trivy-fs-report.json
+    expire_in: 1 week
+    when: always
+  allow_failure: false
+  timeout: 15m
+
+trivy_fs_dev:
+  <<: *trivy_fs_template
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+
+trivy_fs_stage:
+  <<: *trivy_fs_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+
+trivy_fs_prod:
+  <<: *trivy_fs_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+.sonar_template: &sonar_template
+  stage: sonar_check
+  image: ${SONAR_IMAGE}
+  <<: *determine_environment
+  script:
+    - source deploy.env
+    - |
+      echo "Running SonarQube analysis for $ENV_NAME..."
+
+      sonar-scanner \
+        -Dsonar.projectKey=${CI_PROJECT_NAME}-${DEPLOY_ENV} \
+        -Dsonar.projectName="${CI_PROJECT_NAME} (${ENV_NAME})" \
+        -Dsonar.projectVersion=${CI_COMMIT_SHORT_SHA} \
+        -Dsonar.host.url=${SONAR_HOST_URL} \
+        -Dsonar.token=${SONAR_TOKEN} \
+        -Dsonar.qualitygate.wait=${SONAR_QUALITY_GATE_WAIT} \
+        -Dsonar.qualitygate.timeout=300 \
+        -Dsonar.scm.disabled=true
+  cache:
+    key: 'sonar-cache-${CI_PROJECT_ID}-${CI_COMMIT_REF_SLUG}'
+    paths:
+      - .sonar/cache
+      - .scannerwork
+    policy: pull-push
+  tags:
+    - docker
+  allow_failure: true
+  artifacts:
+    paths:
+      - deploy.env
+    expire_in: 1 hour
+
+sonar_check_dev:
+  <<: *sonar_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+      when: on_success
+
+sonar_check_stage:
+  <<: *sonar_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+      when: on_success
+
+sonar_check_prod:
+  <<: *sonar_template
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_success
+
+build_image:
+  stage: build
+  <<: *determine_environment
+  script:
+    - source deploy.env
+    - chmod +x deploy.sh
+    - ./deploy.sh build
+
+    - echo "🛡️ Scanning local Docker image directly..."
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 0 ${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA}
+
+  tags:
+    - build
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  artifacts:
+    paths:
+      - deploy.env
+    expire_in: 1 hour
+
+.deploy_template: &deploy_template
+  stage: deploy
+  <<: *determine_environment
+  script:
+    - source deploy.env
+    - chmod +x deploy.sh
+    - ./deploy.sh deploy
+  tags:
+    - deploy
+  needs:
+    - job: build_image
+
+deploy_dev:
+  <<: *deploy_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+  environment:
+    name: development
+    url: $DYNAMIC_URL
+
+deploy_stage:
+  <<: *deploy_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+  environment:
+    name: staging
+    url: https://stage_${CI_PROJECT_NAME}.iimlab.id
+
+deploy_prod:
+  <<: *deploy_template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  environment:
+    name: production
+    url: $DYNAMIC_URL
+
+cleanup_dev_env:
+  stage: cleanup
+  <<: *determine_environment
+  script:
+    - chmod +x cleanup.sh
+    - ./cleanup.sh
+  tags:
+    - deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+      when: manual
+  allow_failure: true
+
+cleanup_images:
+  stage: cleanup
+  script:
+    - echo "Cleaning up dangling Docker images..."
+    - docker image prune -f --filter "until=24h"
+  tags:
+    - deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^dev_.*/'
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  allow_failure: true

@@ -40,8 +40,10 @@ const snippetVars = computed(() => ({
 </script>
 
 <template>
-  <c-input-text v-model:value="input" label="Your TOML" placeholder="Paste your TOML here..." rows="10" autosize
-    raw-text multiline :validation-rules="rules" monospace />
+  <c-input-text
+    v-model:value="input" label="Your TOML" placeholder="Paste your TOML here..." rows="10" autosize
+    raw-text multiline :validation-rules="rules" monospace
+  />
 
   <CodeSnippet :value="output" label="YAML from your TOML" language="yaml" />
 
