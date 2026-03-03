@@ -66,19 +66,14 @@ stages:
     - pnpm config set store-dir .pnpm-store
     - pnpm install --frozen-lockfile
 
-    - echo "🧪 Running Tests with coverage..."
-    - pnpm run coverage || echo "⚠️ Tests failed, skipping..."
+    - echo "🧪 Running Tests..."
+    - pnpm test || echo "⚠️ Tests failed, skipping..."
 
   cache:
     key: 'pnpm-store-${CI_PROJECT_ID}-${CI_COMMIT_REF_SLUG}'
     paths:
       - .pnpm-store/
     policy: pull-push
-  artifacts:
-    paths:
-      - coverage/
-    expire_in: 1 hour
-    when: always
   timeout: 15m
 
 test_dev:
@@ -100,8 +95,8 @@ test_prod:
     - npm install -g pnpm@9.11.0
     - pnpm config set store-dir .pnpm-store
     - pnpm install --frozen-lockfile
-    - echo "🧪 Running Tests with coverage..."
-    - pnpm run coverage
+    - echo "🧪 Running Tests..."
+    - pnpm test
   allow_failure: false
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
